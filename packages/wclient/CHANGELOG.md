@@ -1,5 +1,11 @@
 # wclient
 
+## 0.1.4
+
+### Patch Changes
+
+- 9c26023: improved documentation and release process
+
 ## 0.1.3
 
 ### Patch Changes
