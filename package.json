@@ -1,5 +1,6 @@
 {
   "name": "wclient-workspace",
+  "packageManager": "pnpm@11.13.1",
   "version": "0.1.0",
   "description": "Workspace for the wclient library and related apps.",
   "author": "Denys Vuika <denys.vuika@gmail.com>",
