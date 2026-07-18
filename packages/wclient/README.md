@@ -28,11 +28,30 @@ if (session) {
 }
 ```
 
-## Modules
+## Supported API subset
 
-- `api`: typed endpoint helpers
-- `auth`: login/session helpers and stores
-- `http`: low-level API client and cache utilities
+### com.atproto.server
+
+- `POST /xrpc/com.atproto.server.createSession`
+- `POST /xrpc/com.atproto.server.refreshSession`
+
+### com.atproto.repo
+
+- `GET /xrpc/com.atproto.repo.describeRepo`
+  - Helper: `api.describeRepo(apiClient, repo)`
+- `GET /xrpc/com.atproto.repo.listRecords`
+  - Helper: `api.listRecords(apiClient, repoDid)`
+
+### com.atproto.sync
+
+- `GET /xrpc/com.atproto.sync.listRepos`
+  - Helper: `api.listRepos(apiClient)`
+
+## Exported modules
+
+- `api`: typed endpoint helpers and response types
+- `auth`: login/refresh flow, session store interfaces, and defaults
+- `http`: low-level request client and ETag cache helpers
 
 ## License
 
