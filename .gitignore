@@ -3,3 +3,7 @@ node_modules/
 dist/
 .playground/
 .wclient-auth-session.json
+
+# Generated declaration artifacts next to source files
+**/*.d.ts
+**/*.d.ts.map

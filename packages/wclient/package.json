@@ -27,5 +27,9 @@
     "lint:fix": "oxlint --fix src",
     "format": "oxfmt .",
     "format:check": "oxfmt --check ."
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }

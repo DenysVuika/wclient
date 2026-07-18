@@ -73,31 +73,9 @@ pnpm start
 
 ## Releases
 
-This workspace uses Changesets for versioning and publishing the library package.
+This workspace uses Changesets for versioning and automated publishing.
 
-Create a changeset:
-
-```bash
-pnpm changeset
-```
-
-Apply version updates from pending changesets:
-
-```bash
-pnpm version-packages
-```
-
-Build and publish non-private packages:
-
-```bash
-pnpm release
-```
-
-Detailed release checklist: see [RELEASE.md](RELEASE.md).
-
-GitHub Actions automation is defined in `.github/workflows/release.yml` and uses npm trusted publishing via GitHub OIDC (no `NPM_TOKEN` secret).
-
-Before publishing, configure trusted publishing for the `wclient` package in npm to trust this GitHub repository/workflow.
+For release steps and troubleshooting, see [RELEASE.md](RELEASE.md).
 
 ## Notes
 
