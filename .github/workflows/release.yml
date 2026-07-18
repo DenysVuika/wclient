@@ -34,19 +34,7 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       - name: Setup npm for trusted publishing
-        run: |
-          npm install -g npm@11
-          node --version
-          npm --version
-          pnpm --version
-
-      - name: Release context
-        run: |
-          echo "workflow=$GITHUB_WORKFLOW"
-          echo "workflow_ref=$GITHUB_WORKFLOW_REF"
-          echo "ref=$GITHUB_REF"
-          echo "sha=$GITHUB_SHA"
-          echo "actor=$GITHUB_ACTOR"
+        run: npm install -g npm@11
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -56,7 +44,6 @@ jobs:
         uses: changesets/action@v1
         with:
           version: pnpm version-packages
-          # Publishing is handled explicitly below for clearer npm/OIDC behavior.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
