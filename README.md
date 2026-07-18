@@ -44,11 +44,28 @@ npm install wclient
 Quick start:
 
 ```ts
+import { api, http } from 'wclient';
+
+const apiClient = http.createApiClient(
+  () => process.env.BLUESKY_SERVER ?? '',
+);
+
+const repoInfo = await api.describeRepo(apiClient, 'did:plc:example');
+console.log(repoInfo.handle);
+```
+
+Authenticated example:
+
+```ts
 import { api, auth, http } from 'wclient';
 
-const baseApi = http.createApiClient(() => process.env.BLUESKY_SERVER ?? '');
-const authClient = auth.createAuth(baseApi);
-const client = http.createApiClient(() => process.env.BLUESKY_SERVER ?? '', authClient);
+const authClient = auth.createAuth(
+  http.createApiClient(() => process.env.BLUESKY_SERVER ?? ''),
+);
+const apiClient = http.createApiClient(
+  () => process.env.BLUESKY_SERVER ?? '',
+  authClient,
+);
 
 const session = await authClient.login({
   identifier: process.env.BLUESKY_USERNAME,
@@ -56,7 +73,7 @@ const session = await authClient.login({
 });
 
 if (session) {
-  const repoInfo = await api.describeRepo(client, session.did);
+  const repoInfo = await api.describeRepo(apiClient, session.did);
   console.log(repoInfo.handle);
 }
 ```
