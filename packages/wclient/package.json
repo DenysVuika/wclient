@@ -1,6 +1,6 @@
 {
   "name": "wclient",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Minimalistic TypeScript client library for the W social media platform, containing a focused subset of Bluesky / AT Protocol XRPC endpoints.",
   "author": "Denys Vuika <denys.vuika@gmail.com>",
   "main": "./dist/index.mjs",
