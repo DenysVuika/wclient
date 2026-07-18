@@ -1,11 +1,14 @@
 # wclient
 
-Minimal TypeScript library for a small, focused subset of Bluesky / AT Protocol XRPC endpoints.
+Minimalistic TypeScript client library for the W social media platform, containing a focused subset of Bluesky / AT Protocol XRPC endpoints.
+
+> [!WARNING]
+> This project is in active development. Breaking changes may happen in minor releases until `v1.0.0`.
 
 ## What this project does
 
 - Exports reusable `api`, `auth`, and `http` modules from the package root.
-- Persists session tokens locally (file-backed store).
+- Uses an in-memory auth session store by default, with optional pluggable persistence.
 - Auto-refreshes access tokens on `401` and retries once.
 - Calls a small set of typed API helpers.
 
@@ -53,10 +56,10 @@ pnpm build
 
 ## Notes
 
-- Session data is stored in `.wclient-auth-session.json`.
-- The session store API is pluggable: you can replace the file-backed store with a more secure implementation later.
+- Session data is only stored on disk when you provide a persistent store such as the file-backed store used by the local playground.
+- The default auth session store is in-memory, and the session store API is pluggable if you want file-backed or custom persistence.
 - This is intentionally minimal and not a complete Bluesky SDK.
 
 ## License
 
-Apache License 2.0. See [LICENSE](/home/denys/projects/atproto/wclient/LICENSE) for details.
+Apache License 2.0. See [LICENSE](LICENSE) for details.
