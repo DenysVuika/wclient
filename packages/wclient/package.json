@@ -21,6 +21,8 @@
     "build": "tsdown",
     "prepack": "pnpm build",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "oxlint --type-aware",
     "lint:fix": "oxlint --fix src",
     "format": "oxfmt .",

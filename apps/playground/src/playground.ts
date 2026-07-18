@@ -1,18 +1,16 @@
 import * as dotenv from 'dotenv';
 import { join } from 'node:path';
 import { api, auth, http } from 'wclient';
+import { getBlueskyServer } from './env';
 
 dotenv.config();
 
-const baseApi = http.createApiClient(() => process.env.BLUESKY_SERVER ?? '');
+const baseApi = http.createApiClient(getBlueskyServer);
 const authStore = auth.createFileAuthSessionStore(
   join(process.cwd(), '.wclient-auth-session.json'),
 );
 const authClient = auth.createAuth(baseApi, authStore);
-const apiClient = http.createApiClient(
-  () => process.env.BLUESKY_SERVER ?? '',
-  authClient,
-);
+const apiClient = http.createApiClient(getBlueskyServer, authClient);
 
 async function main() {
   const session =

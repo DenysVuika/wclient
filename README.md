@@ -59,11 +59,41 @@ Build workspace projects:
 pnpm build
 ```
 
+Run tests across all workspace projects:
+
+```bash
+pnpm test
+```
+
 Run the playground app:
 
 ```bash
 pnpm start
 ```
+
+## Releases
+
+This workspace uses Changesets for versioning and publishing the library package.
+
+Create a changeset:
+
+```bash
+pnpm changeset
+```
+
+Apply version updates from pending changesets:
+
+```bash
+pnpm version-packages
+```
+
+Build and publish non-private packages:
+
+```bash
+pnpm release
+```
+
+GitHub Actions automation is defined in `.github/workflows/release.yml` and expects an `NPM_TOKEN` repository secret.
 
 ## Notes
 
