@@ -17,7 +17,7 @@
     "start": "pnpm --filter @wclient/playground start",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "pnpm build && changeset publish"
+    "release": "pnpm --filter wclient build && changeset publish"
   },
   "keywords": [],
   "license": "Apache-2.0",
