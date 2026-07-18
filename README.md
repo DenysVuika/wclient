@@ -33,6 +33,34 @@ Minimalistic TypeScript client library for the W social media platform, containi
 - `GET /xrpc/com.atproto.sync.listRepos`
   - Implemented in `packages/wclient/src/api/sync.ts` as `listRepos`.
 
+## Install from npm
+
+Install the published library:
+
+```bash
+npm install wclient
+```
+
+Quick start:
+
+```ts
+import { api, auth, http } from 'wclient';
+
+const baseApi = http.createApiClient(() => process.env.BLUESKY_SERVER ?? '');
+const authClient = auth.createAuth(baseApi);
+const client = http.createApiClient(() => process.env.BLUESKY_SERVER ?? '', authClient);
+
+const session = await authClient.login({
+  identifier: process.env.BLUESKY_USERNAME,
+  password: process.env.BLUESKY_PASSWORD,
+});
+
+if (session) {
+  const repoInfo = await api.describeRepo(client, session.did);
+  console.log(repoInfo.handle);
+}
+```
+
 ## Workspace layout
 
 - `packages/wclient`: publishable TypeScript library.

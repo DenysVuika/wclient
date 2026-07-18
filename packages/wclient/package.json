@@ -15,6 +15,15 @@
     "dist"
   ],
   "keywords": [],
+  "homepage": "https://github.com/DenysVuika/wclient#readme",
+  "bugs": {
+    "url": "https://github.com/DenysVuika/wclient/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DenysVuika/wclient.git",
+    "directory": "packages/wclient"
+  },
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
