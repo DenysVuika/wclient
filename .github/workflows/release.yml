@@ -47,7 +47,7 @@ jobs:
 
       - name: Build and test (publish only)
         if: steps.pending.outputs.has_changesets == 'false'
-        run: pnpm build && pnpm test
+        run: pnpm --filter wclient build && pnpm --filter wclient test
 
       - name: Create release PR or publish
         id: changesets
