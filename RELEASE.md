@@ -10,24 +10,15 @@ This project uses Changesets for versioning and GitHub Actions for publishing.
 pnpm lint && pnpm typecheck && pnpm test && pnpm build
 ```
 
-2. Create a changeset:
+1. Create a changeset:
 
 ```bash
 pnpm changeset
 ```
 
-3. Commit both code and `.changeset/*.md`, then open a PR to `main`.
-4. Merge the PR after CI passes.
-5. Merge the generated "Version Packages" PR to publish to npm.
-
-## One-time setup
-
-1. Publish initial package version manually from `packages/wclient`.
-2. Configure npm trusted publishing for package `wclient`:
-   - GitHub owner: `DenysVuika`
-   - Repository: `wclient`
-   - Workflow: `.github/workflows/release.yml`
-3. Confirm release workflow has OIDC permission (`id-token: write`).
+1. Commit both code and `.changeset/*.md`, then open a PR to `main`.
+2. Merge the PR after CI passes.
+3. Merge the generated "Version Packages" PR to publish to npm.
 
 ## Normal release flow
 
@@ -45,7 +36,7 @@ pnpm lint && pnpm typecheck && pnpm test && pnpm build
 pnpm changeset
 ```
 
-1. Select package `wclient` and choose bump type:
+1. Select the target package and choose bump type:
    - `patch`: bug fixes
    - `minor`: backward-compatible features
    - `major`: breaking changes
@@ -67,7 +58,7 @@ pnpm changeset
 3. Optionally verify package contents:
 
 ```bash
-cd packages/wclient
+cd packages/<library-package>
 npm pack --dry-run
 ```
 
