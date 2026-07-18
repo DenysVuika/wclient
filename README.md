@@ -93,6 +93,8 @@ Build and publish non-private packages:
 pnpm release
 ```
 
+Detailed release checklist: see [RELEASE.md](RELEASE.md).
+
 GitHub Actions automation is defined in `.github/workflows/release.yml` and uses npm trusted publishing via GitHub OIDC (no `NPM_TOKEN` secret).
 
 Before publishing, configure trusted publishing for the `wclient` package in npm to trust this GitHub repository/workflow.
