@@ -24,14 +24,19 @@ Minimalistic TypeScript client library for the W social media platform, containi
 ### com.atproto.repo
 
 - `GET /xrpc/com.atproto.repo.describeRepo`
-  - Implemented in `src/api/repo.ts` as `describeRepo`.
+  - Implemented in `packages/wclient/src/api/repo.ts` as `describeRepo`.
 - `GET /xrpc/com.atproto.repo.listRecords`
-  - Implemented in `src/api/repo.ts` as `listRecords`.
+  - Implemented in `packages/wclient/src/api/repo.ts` as `listRecords`.
 
 ### com.atproto.sync
 
 - `GET /xrpc/com.atproto.sync.listRepos`
-  - Implemented in `src/api/sync.ts` as `listRepos`.
+  - Implemented in `packages/wclient/src/api/sync.ts` as `listRepos`.
+
+## Workspace layout
+
+- `packages/wclient`: publishable TypeScript library.
+- `apps/playground`: local runnable app that consumes `wclient` via `workspace:*`.
 
 ## Setup
 
@@ -48,10 +53,16 @@ Configure environment values in `.env` (see `.env.example`):
 - `BLUESKY_PASSWORD`
 - Optional: `WCLIENT_DEBUG_AUTH=1` (or `true`) for auth/session debug logs.
 
-Build the library:
+Build workspace projects:
 
 ```bash
 pnpm build
+```
+
+Run the playground app:
+
+```bash
+pnpm start
 ```
 
 ## Notes

@@ -1,36 +1,22 @@
 {
-  "name": "wclient",
+  "name": "wclient-workspace",
   "version": "0.1.0",
-  "description": "Minimalistic TypeScript client library for the W social media platform, containing a focused subset of Bluesky / AT Protocol XRPC endpoints.",
+  "description": "Workspace for the wclient library and related apps.",
   "author": "Denys Vuika <denys.vuika@gmail.com>",
-  "main": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.mts",
-      "import": "./dist/index.mjs"
-    }
-  },
-  "files": [
-    "dist"
-  ],
+  "private": true,
   "scripts": {
-    "build": "tsdown",
-    "build:playground": "tsdown --config tsdown.playground.config.ts",
-    "prepack": "pnpm build",
-    "typecheck": "tsc --noEmit",
-    "start": "npm run build:playground && node .playground/playground.mjs",
-    "lint": "oxlint --type-aware",
-    "lint:fix": "oxlint --fix src tests",
-    "format": "oxfmt .",
-    "format:check": "oxfmt --check ."
+    "build": "pnpm -r --filter ./packages/* --filter ./apps/* build",
+    "typecheck": "pnpm -r --filter ./packages/* --filter ./apps/* typecheck",
+    "lint": "pnpm -r --filter ./packages/* --filter ./apps/* lint",
+    "lint:fix": "pnpm -r --filter ./packages/* --filter ./apps/* lint:fix",
+    "format": "pnpm -r --filter ./packages/* --filter ./apps/* format",
+    "format:check": "pnpm -r --filter ./packages/* --filter ./apps/* format:check",
+    "start": "pnpm --filter @wclient/playground start"
   },
   "keywords": [],
   "license": "Apache-2.0",
-  "type": "module",
   "devDependencies": {
     "@types/node": "^26.1.1",
-    "dotenv": "^17.4.2",
     "oxfmt": "^0.59.0",
     "oxlint": "^1.73.0",
     "oxlint-tsgolint": "^0.25.0",

@@ -11,9 +11,6 @@ importers:
       '@types/node':
         specifier: ^26.1.1
         version: 26.1.1
-      dotenv:
-        specifier: ^17.4.2
-        version: 17.4.2
       oxfmt:
         specifier: ^0.59.0
         version: 0.59.0
@@ -29,6 +26,18 @@ importers:
       typescript:
         specifier: ^7.0.2
         version: 7.0.2
+
+  apps/playground:
+    dependencies:
+      wclient:
+        specifier: workspace:*
+        version: link:../../packages/wclient
+    devDependencies:
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
+
+  packages/wclient: {}
 
 packages:
 

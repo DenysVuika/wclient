@@ -1,0 +1,20 @@
+{
+  "name": "@wclient/playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsdown",
+    "start": "pnpm run build && node .playground/playground.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint --type-aware",
+    "lint:fix": "oxlint --fix src",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check ."
+  },
+  "dependencies": {
+    "wclient": "workspace:*"
+  },
+  "devDependencies": {
+    "dotenv": "^17.4.2"
+  }
+}
