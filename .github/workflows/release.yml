@@ -44,26 +44,22 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Detect pending changesets
-        id: pending
-        run: |
-          count=$(find .changeset -maxdepth 1 -name '*.md' ! -name 'README.md' | wc -l | tr -d ' ')
-          if [ "$count" -gt 0 ]; then
-            echo "has_changesets=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_changesets=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Build and test (publish only)
-        if: steps.pending.outputs.has_changesets == 'false'
-        run: pnpm --filter wclient build && pnpm --filter wclient test
-
-      - name: Create release PR or publish
+      - name: Create release PR or prepare publish
         id: changesets
         uses: changesets/action@v1
         with:
           version: pnpm version-packages
-          publish: pnpm release
+          # Publishing is handled explicitly below for clearer npm/OIDC behavior.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true
+
+      - name: Build and test (publish only)
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: pnpm --filter wclient build && pnpm --filter wclient test
+
+      - name: Publish wclient to npm (OIDC)
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        working-directory: packages/wclient
+        run: npm publish --access public
+        env:
+          NPM_CONFIG_PROVENANCE: false
