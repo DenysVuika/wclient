@@ -1,5 +1,11 @@
 # wclient
 
+## 0.1.3
+
+### Patch Changes
+
+- 580d3ff: improved release process
+
 ## 0.1.2
 
 ### Patch Changes
