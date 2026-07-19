@@ -1,7 +1,114 @@
+import * as dotenv from 'dotenv';
+import { existsSync } from 'node:fs';
+import { dirname, isAbsolute, join, resolve } from 'node:path';
+import { createFileAuthSessionStore, type Session } from './auth/index.js';
 import { DEFAULT_PDS_URL, WClient } from './wclient.js';
 
-const rawArgs = process.argv.slice(2).filter((arg) => arg !== '--');
-const [command, ...rest] = rawArgs;
+function extractEnvFileArg(args: string[]): string | null | undefined {
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === '--env-file') {
+      return args[i + 1] ?? null;
+    }
+
+    if (arg?.startsWith('--env-file=')) {
+      const value = arg.slice('--env-file='.length);
+      return value.length > 0 ? value : null;
+    }
+  }
+
+  return undefined;
+}
+
+function stripEnvFileArg(args: string[]): string[] {
+  const result: string[] = [];
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === undefined) {
+      continue;
+    }
+
+    if (arg === '--env-file') {
+      i++;
+      continue;
+    }
+
+    if (arg?.startsWith('--env-file=')) {
+      continue;
+    }
+
+    result.push(arg);
+  }
+
+  return result;
+}
+
+function findWorkspaceRoot(startDir: string): string | null {
+  let currentDir = startDir;
+  while (true) {
+    if (existsSync(join(currentDir, 'pnpm-workspace.yaml'))) {
+      return currentDir;
+    }
+
+    const parentDir = dirname(currentDir);
+    if (parentDir === currentDir) {
+      return null;
+    }
+    currentDir = parentDir;
+  }
+}
+
+function loadEnv(explicitEnvFile: string | undefined): void {
+  if (explicitEnvFile) {
+    const baseDir = findWorkspaceRoot(process.cwd()) ?? process.cwd();
+    const envPath = isAbsolute(explicitEnvFile)
+      ? explicitEnvFile
+      : resolve(baseDir, explicitEnvFile);
+
+    if (!existsSync(envPath)) {
+      console.error(`Error: --env-file not found: ${envPath}`);
+      process.exit(1);
+    }
+
+    dotenv.config({ path: envPath, quiet: true });
+    return;
+  }
+
+  const workspaceRoot = findWorkspaceRoot(process.cwd());
+  const candidateDirs = [process.env.INIT_CWD, workspaceRoot, process.cwd()].filter(
+    (value, index, all): value is string =>
+      typeof value === 'string' && value.length > 0 && all.indexOf(value) === index,
+  );
+
+  for (const dir of candidateDirs) {
+    const envPath = join(dir, '.env');
+    if (existsSync(envPath)) {
+      dotenv.config({ path: envPath, quiet: true });
+      return;
+    }
+  }
+
+  dotenv.config({ quiet: true });
+}
+
+const explicitEnvFile = extractEnvFileArg(process.argv.slice(2));
+if (explicitEnvFile === null) {
+  console.error('Error: --env-file requires a path value.');
+  process.exit(1);
+}
+
+loadEnv(explicitEnvFile);
+
+const rawArgs = stripEnvFileArg(process.argv.slice(2)).filter(
+  (arg) => arg !== '--',
+);
+const commandIndex = rawArgs.findIndex((arg) => !arg.startsWith('--'));
+const command = commandIndex === -1 ? undefined : rawArgs[commandIndex];
+const rest =
+  commandIndex === -1
+    ? rawArgs
+    : rawArgs.filter((_, index) => index !== commandIndex);
 
 type Flags = Record<string, string | boolean>;
 
@@ -40,7 +147,9 @@ Commands:
   list-repos                    List repositories on the PDS
 
 Global Options:
+  --env-file <path>             Load environment variables from a specific file
   --base-url <url>              PDS base URL (default: ${DEFAULT_PDS_URL})
+  --auth                        Authenticate using W_USERNAME and W_PASSWORD
   --help                        Show this help message
 
 Examples:
@@ -57,17 +166,45 @@ async function main(): Promise<void> {
 
   const { flags, positional } = parseArgs(rest);
   const baseUrl =
-    typeof flags['base-url'] === 'string' ? flags['base-url'] : undefined;
-  const client = new WClient(baseUrl ? { baseUrl } : {});
+    typeof flags['base-url'] === 'string'
+      ? flags['base-url']
+      : process.env.W_SERVER;
+
+  let session: Session | null = null;
+  let client: WClient;
+
+  if (flags['auth'] === true) {
+    const identifier = process.env.W_USERNAME;
+    const password = process.env.W_PASSWORD;
+    if (!identifier || !password) {
+      console.error(
+        'Error: --auth requires W_USERNAME and W_PASSWORD to be set in the environment or .env file.',
+      );
+      process.exit(1);
+    }
+    const authStore = createFileAuthSessionStore(
+      join(process.cwd(), '.wclient-auth-session.json'),
+    );
+    client = new WClient({ ...(baseUrl ? { baseUrl } : {}), authStore });
+    session =
+      client.getSession() ?? (await client.login({ identifier, password }));
+    if (!session) {
+      console.error('Authentication failed.');
+      process.exit(1);
+    }
+  } else {
+    client = new WClient(baseUrl ? { baseUrl } : {});
+  }
 
   switch (command) {
     case 'describe-repo': {
       const repo =
         positional[0] ??
-        (typeof flags['repo'] === 'string' ? flags['repo'] : undefined);
+        (typeof flags['repo'] === 'string' ? flags['repo'] : undefined) ??
+        session?.did;
       if (!repo) {
-        console.error('Error: <repo> argument is required.');
-        console.error('Usage: wclient describe-repo <repo>');
+        console.error('Error: <repo> argument is required (or use --auth to use the authenticated DID).');
+        console.error('Usage: wclient describe-repo [<repo>] [--auth]');
         process.exit(1);
       }
       const result = await client.repo.describeRepo(repo);
@@ -77,15 +214,18 @@ async function main(): Promise<void> {
 
     case 'list-records': {
       const repo =
-        typeof flags['repo'] === 'string' ? flags['repo'] : undefined;
+        (typeof flags['repo'] === 'string' ? flags['repo'] : undefined) ??
+        session?.did;
       const collection =
         typeof flags['collection'] === 'string'
           ? flags['collection']
           : undefined;
       if (!repo || !collection) {
-        console.error('Error: --repo and --collection are required.');
         console.error(
-          'Usage: wclient list-records --repo <repo> --collection <nsid> [--limit N] [--cursor X] [--reverse]',
+          'Error: --collection is required; --repo is required unless using --auth with an authenticated session.',
+        );
+        console.error(
+          'Usage: wclient list-records [--repo <repo>] --collection <nsid> [--limit N] [--cursor X] [--reverse] [--auth]',
         );
         process.exit(1);
       }

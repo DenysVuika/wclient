@@ -8,6 +8,7 @@ const authStore = auth.createFileAuthSessionStore(
   join(process.cwd(), '.wclient-auth-session.json'),
 );
 const client = new WClient({
+  ...(process.env.W_SERVER ? { baseUrl: process.env.W_SERVER } : {}),
   authStore,
 });
 
@@ -15,8 +16,8 @@ async function main() {
   const session =
     client.getSession() ??
     (await client.login({
-      identifier: process.env.BLUESKY_USERNAME,
-      password: process.env.BLUESKY_PASSWORD,
+      identifier: process.env.W_USERNAME,
+      password: process.env.W_PASSWORD,
     }));
 
   if (!session) {

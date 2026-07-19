@@ -25,7 +25,7 @@ Use a custom PDS URL when needed:
 import { WClient } from 'wclient';
 
 const client = new WClient({
-  baseUrl: process.env.BLUESKY_SERVER ?? '',
+  baseUrl: process.env.W_SERVER ?? '',
 });
 ```
 
@@ -37,8 +37,8 @@ import { WClient } from 'wclient';
 const client = new WClient();
 
 const session = await client.login({
-  identifier: process.env.BLUESKY_USERNAME,
-  password: process.env.BLUESKY_PASSWORD,
+  identifier: process.env.W_USERNAME,
+  password: process.env.W_PASSWORD,
 });
 
 if (session) {
@@ -106,17 +106,22 @@ List records in a repository collection.
 npx wclient list-records --repo alice.wsocial.network --collection app.bsky.feed.post
 npx wclient list-records --repo alice.wsocial.network --collection app.bsky.feed.post --limit 10
 npx wclient list-records --repo alice.wsocial.network --collection app.bsky.feed.post --cursor <cursor> --reverse
+
+# authenticated flow (repo defaults to session.did)
+npx wclient --env-file .env --auth list-records --collection "app.bsky.feed.post"
 ```
 
 Options:
 
 | Flag | Required | Description |
 |---|---|---|
-| `--repo` | yes | Handle or DID of the repository |
+| `--repo` | yes* | Handle or DID of the repository |
 | `--collection` | yes | NSID of the collection (e.g. `app.bsky.feed.post`) |
 | `--limit` | no | Number of records to return (1–100, default 50) |
 | `--cursor` | no | Pagination cursor from a previous response |
 | `--reverse` | no | Reverse the order of returned records |
+
+`*` `--repo` can be omitted when using `--auth`; in that case, the CLI uses the authenticated session DID.
 
 #### `list-repos`
 
@@ -130,12 +135,23 @@ npx wclient list-repos
 
 | Flag | Description |
 |---|---|
+| `--env-file <path>` | Load environment variables from a specific file |
 | `--base-url <url>` | Override the default PDS URL |
 | `--help` | Show help |
 
 ```bash
+npx wclient --env-file .env.local --auth describe-repo
 npx wclient --base-url https://my.pds.example list-repos
 ```
+
+## Environment variables
+
+| Variable | Description |
+|---|---|
+| `W_USERNAME` | Handle or DID used for authentication |
+| `W_PASSWORD` | App password used for authentication |
+| `W_SERVER` | PDS base URL (overrides the default `https://pds.wsocial.network`) |
+| `WCLIENT_DEBUG_AUTH` | Set to `1` or `true` to log auth, session restore, and token refresh details |
 
 ## Exported modules
 

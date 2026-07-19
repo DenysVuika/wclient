@@ -43,7 +43,11 @@ importers:
         specifier: ^17.4.2
         version: 17.4.2
 
-  packages/wclient: {}
+  packages/wclient:
+    dependencies:
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
 
 packages:
 
