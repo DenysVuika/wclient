@@ -1,93 +1,10 @@
-# wclient
+# wclient workspace
 
-Minimalistic TypeScript client library for the W social media platform, containing a focused subset of Bluesky / AT Protocol XRPC endpoints.
+This repository contains the publishable `wclient` package plus a small playground app for local development.
 
-> [!WARNING]
-> This project is in active development. Breaking changes may happen in minor releases until `v1.0.0`.
+If you are looking for the npm package docs, start here: [packages/wclient/README.md](packages/wclient/README.md).
 
-## What this project does
-
-- Exports reusable `api`, `auth`, and `http` modules from the package root.
-- Exposes a higher-level `WClient` wrapper for common authenticated flows.
-- Defaults to `DEFAULT_PDS_URL` when you do not provide a custom PDS URL.
-- Uses an in-memory auth session store by default, with optional pluggable persistence.
-- Auto-refreshes access tokens on `401` and retries once.
-- Calls a small set of typed API helpers.
-
-## Supported API subset
-
-### com.atproto.server
-
-- `POST /xrpc/com.atproto.server.createSession`
-  - Used for initial login.
-- `POST /xrpc/com.atproto.server.refreshSession`
-  - Used to refresh access tokens.
-
-### com.atproto.repo
-
-- `GET /xrpc/com.atproto.repo.describeRepo`
-  - Implemented in `packages/wclient/src/api/repo.ts` as `describeRepo`.
-- `GET /xrpc/com.atproto.repo.listRecords`
-  - Implemented in `packages/wclient/src/api/repo.ts` as `listRecords`.
-
-### com.atproto.sync
-
-- `GET /xrpc/com.atproto.sync.listRepos`
-  - Implemented in `packages/wclient/src/api/sync.ts` as `listRepos`.
-
-## Install from npm
-
-Install the published library:
-
-```bash
-npm install wclient
-```
-
-Quick start:
-
-```ts
-import { WClient } from 'wclient';
-
-const client = new WClient();
-
-const repoInfo = await client.repo.describeRepo('did:plc:example');
-console.log(repoInfo.handle);
-```
-
-Use a custom PDS URL when needed:
-
-```ts
-import { WClient } from 'wclient';
-
-const client = new WClient({
-  baseUrl: process.env.BLUESKY_SERVER ?? '',
-});
-```
-
-Authenticated example:
-
-```ts
-import { WClient } from 'wclient';
-
-const client = new WClient();
-
-const session = await client.login({
-  identifier: process.env.BLUESKY_USERNAME,
-  password: process.env.BLUESKY_PASSWORD,
-});
-
-if (session) {
-  const repoInfo = await client.repo.describeRepo(session.did);
-  console.log(repoInfo.handle);
-}
-```
-
-## Workspace layout
-
-- `packages/wclient`: publishable TypeScript library.
-- `apps/playground`: local runnable app that consumes `wclient` via `workspace:*`.
-
-## Setup
+## Local development
 
 Install dependencies:
 
@@ -95,43 +12,18 @@ Install dependencies:
 pnpm install
 ```
 
-Configure environment values in `.env` (see `.env.example`):
-
-- `BLUESKY_SERVER`
-- `BLUESKY_USERNAME`
-- `BLUESKY_PASSWORD`
-- Optional: `WCLIENT_DEBUG_AUTH=1` (or `true`) for auth/session debug logs.
-
-Build workspace projects:
+Common workspace commands:
 
 ```bash
 pnpm build
-```
-
-Run tests across all workspace projects:
-
-```bash
+pnpm typecheck
 pnpm test
-```
-
-Run the playground app:
-
-```bash
 pnpm start
 ```
 
-## Releases
+The workspace is split into:
 
-This workspace uses Changesets for versioning and automated publishing.
+- [packages/wclient](packages/wclient) for the published library.
+- [apps/playground](apps/playground) for the local runnable example.
 
-For release steps and troubleshooting, see [RELEASE.md](RELEASE.md).
-
-## Notes
-
-- Session data is only stored on disk when you provide a persistent store such as the file-backed store used by the local playground.
-- The default auth session store is in-memory, and the session store API is pluggable if you want file-backed or custom persistence.
-- This is intentionally minimal and not a complete Bluesky SDK.
-
-## License
-
-Apache License 2.0. See [LICENSE](LICENSE) for details.
+For release steps and publishing notes, see [RELEASE.md](RELEASE.md).
