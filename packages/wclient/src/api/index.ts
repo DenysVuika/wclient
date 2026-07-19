@@ -2,6 +2,7 @@ export {
   describeRepo,
   listRecords,
   type DescribeRepoResponse,
+  type ListRecordsOptions,
   type ListRecordsResponse,
   type RepoRecord,
 } from './repo';

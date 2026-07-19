@@ -20,13 +20,18 @@ export type DescribeRepoResponse = {
   handleIsCorrect: boolean;
 };
 
-export async function listRecords(api: ApiClient, repoDid: string): Promise<CachedResponse<ListRecordsResponse>> {
-  return api.requestWithCache<ListRecordsResponse>('com.atproto.repo.listRecords', {
+export type ListRecordsOptions = {
+  repo: string;
+  limit?: number;
+  cursor?: string;
+  reverse?: boolean;
+  collection: string;
+};
+
+export async function listRecords(api: ApiClient, options: ListRecordsOptions): Promise<CachedResponse<ListRecordsResponse>> {
+  return api.requestWithCache<ListRecordsResponse>(`com.atproto.repo.listRecords:${JSON.stringify(options)}`, {
     path: 'com.atproto.repo.listRecords',
-    query: {
-      repo: repoDid,
-      collection: 'app.bsky.feed.post',
-    },
+    query: options,
   });
 }
 
