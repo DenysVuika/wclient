@@ -2,9 +2,9 @@ import {
   describeRepo,
   listRecords,
   listRepos,
-  type DescribeRepoResponse,
-  type ListRecordsResponse,
-  type ListReposResponse,
+  type ListRecordsOptions,
+  type RepoService,
+  type SyncService,
 } from './api';
 import {
   createAuth,
@@ -14,7 +14,6 @@ import {
   type LoginOptions,
   type Session,
 } from './auth';
-import { type CachedResponse } from './http';
 import { createApiClient, type ApiClient } from './http/client';
 
 type BaseUrlOption = string | (() => string);
@@ -26,30 +25,28 @@ export type WClientOptions = {
 
 export const DEFAULT_PDS_URL = 'https://pds.wsocial.network';
 
-function toBaseUrlGetter(baseUrl: BaseUrlOption = DEFAULT_PDS_URL): () => string {
-  return typeof baseUrl === 'function' ? baseUrl : () => baseUrl;
-}
-
 export class WClient {
   readonly auth: AuthClient;
   readonly apiClient: ApiClient;
-  readonly repo: {
-    describeRepo: (repo: string) => Promise<DescribeRepoResponse>;
-    listRecords: (repoDid: string) => Promise<CachedResponse<ListRecordsResponse>>;
-  };
-  readonly sync: {
-    listRepos: () => Promise<CachedResponse<ListReposResponse>>;
-  };
+  readonly repo: RepoService;
+  readonly sync: SyncService;
 
-  constructor({ baseUrl, authStore = createInMemoryAuthSessionStore() }: WClientOptions = {}) {
-    const getBaseUrl = toBaseUrlGetter(baseUrl);
-    const authApiClient = createApiClient(getBaseUrl);
+  constructor({
+    baseUrl,
+    authStore = createInMemoryAuthSessionStore(),
+  }: WClientOptions = {}) {
+    const resolveBaseUrl =
+      typeof baseUrl === 'function'
+        ? baseUrl
+        : () => baseUrl ?? DEFAULT_PDS_URL;
+    const authApiClient = createApiClient(resolveBaseUrl);
 
     this.auth = createAuth(authApiClient, authStore);
-    this.apiClient = createApiClient(getBaseUrl, this.auth);
+    this.apiClient = createApiClient(resolveBaseUrl, this.auth);
     this.repo = {
       describeRepo: (repo: string) => describeRepo(this.apiClient, repo),
-      listRecords: (repoDid: string) => listRecords(this.apiClient, repoDid),
+      listRecords: (options: ListRecordsOptions) =>
+        listRecords(this.apiClient, options),
     };
     this.sync = {
       listRepos: () => listRepos(this.apiClient),

@@ -16,7 +16,13 @@ type ApiRequestOptions = {
   body?: BodyInit | null;
 };
 
-export type ApiClient = ReturnType<typeof createApiClient>;
+export type ApiClient = {
+  request: (options: ApiRequestOptions) => Promise<Response>;
+  requestWithCache: <T>(
+    cacheKey: string,
+    options: ApiRequestOptions,
+  ) => Promise<CachedResponse<T>>;
+};
 
 function toQueryString(query?: Record<string, QueryValue>): string {
   if (!query) {
@@ -65,7 +71,10 @@ function createFetchWithAuthRetry(auth?: AuthProvider) {
   };
 }
 
-export function createApiClient(getBaseUrl: () => string, auth?: AuthProvider) {
+export function createApiClient(
+  getBaseUrl: () => string,
+  auth?: AuthProvider,
+): ApiClient {
   const fetchWithAuthRetry = createFetchWithAuthRetry(auth);
 
   function buildUrl(path: string, query?: Record<string, QueryValue>): string {

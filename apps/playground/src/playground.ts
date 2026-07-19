@@ -8,6 +8,7 @@ const authStore = auth.createFileAuthSessionStore(
   join(process.cwd(), '.wclient-auth-session.json'),
 );
 const client = new WClient({
+  ...(process.env.W_SERVER ? { baseUrl: process.env.W_SERVER } : {}),
   authStore,
 });
 
@@ -15,8 +16,8 @@ async function main() {
   const session =
     client.getSession() ??
     (await client.login({
-      identifier: process.env.BLUESKY_USERNAME,
-      password: process.env.BLUESKY_PASSWORD,
+      identifier: process.env.W_USERNAME,
+      password: process.env.W_PASSWORD,
     }));
 
   if (!session) {
@@ -34,24 +35,12 @@ async function main() {
     handleIsCorrect: repoInfo.handleIsCorrect,
   });
 
-  // test listRecords
-
-  // const first = await listRecords(api, session.did);
-  // console.log('First call from cache:', first.fromCache);
-
-  // const second = await listRecords(api, session.did);
-  // console.log('Second call from cache:', second.fromCache);
-
-  // test listRepos
-  // const first = await listRepos(api);
-  // console.log('First call from cache:', first.fromCache);
-
-  // const second = await listRepos(api);
-  // console.log('Second call from cache:', second.fromCache);
-
-  // const response = await listRecords(api, session.did);
-  // console.log('Response from cache:', response.fromCache);
-  // console.log(JSON.stringify(response.data, null, 2));
+  const records = await client.repo.listRecords({
+    repo: session.did,
+    collection: 'app.bsky.feed.post',
+    limit: 10,
+  });
+  console.log('Records:', JSON.stringify(records, null, 2));
 }
 
 main().catch((error: unknown) => {
