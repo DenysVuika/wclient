@@ -1,14 +1,14 @@
 import * as dotenv from 'dotenv';
 import { join } from 'node:path';
 import { WClient, auth } from 'wclient';
-import { getBlueskyServer } from './env';
 
 dotenv.config();
 
 const authStore = auth.createFileAuthSessionStore(join(process.cwd(), '.wclient-auth-session.json'));
+const baseUrl = process.env.BLUESKY_SERVER;
 const client = new WClient({
-  baseUrl: getBlueskyServer,
   authStore,
+  ...(baseUrl ? { baseUrl } : {}),
 });
 
 async function main() {
