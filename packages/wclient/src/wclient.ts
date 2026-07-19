@@ -26,12 +26,6 @@ export type WClientOptions = {
 
 export const DEFAULT_PDS_URL = 'https://pds.wsocial.network';
 
-function toBaseUrlGetter(
-  baseUrl: BaseUrlOption = DEFAULT_PDS_URL,
-): () => string {
-  return typeof baseUrl === 'function' ? baseUrl : () => baseUrl;
-}
-
 export type SyncService = {
   listRepos: () => Promise<CachedResponse<ListReposResponse>>;
 };
@@ -46,11 +40,14 @@ export class WClient {
     baseUrl,
     authStore = createInMemoryAuthSessionStore(),
   }: WClientOptions = {}) {
-    const getBaseUrl = toBaseUrlGetter(baseUrl);
-    const authApiClient = createApiClient(getBaseUrl);
+    const resolveBaseUrl =
+      typeof baseUrl === 'function'
+        ? baseUrl
+        : () => baseUrl ?? DEFAULT_PDS_URL;
+    const authApiClient = createApiClient(resolveBaseUrl);
 
     this.auth = createAuth(authApiClient, authStore);
-    this.apiClient = createApiClient(getBaseUrl, this.auth);
+    this.apiClient = createApiClient(resolveBaseUrl, this.auth);
     this.repo = {
       describeRepo: (repo: string) => describeRepo(this.apiClient, repo),
       listRecords: (options: ListRecordsOptions) =>

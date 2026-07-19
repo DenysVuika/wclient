@@ -59,7 +59,21 @@ if (session) {
 - `GET /xrpc/com.atproto.repo.describeRepo`
   - Helper: `client.repo.describeRepo(repo)`
 - `GET /xrpc/com.atproto.repo.listRecords`
-  - Helper: `client.repo.listRecords(repoDid)`
+  - Helper: `client.repo.listRecords(options)`
+  - Example:
+
+```ts
+const records = await client.repo.listRecords({
+  repo: 'did:plc:example',
+  collection: 'app.bsky.feed.post',
+  // Optional. Default is 50, range is 1..100.
+  limit: 50,
+  // Optional pagination cursor from a previous response.
+  cursor: undefined,
+  // Optional. Reverse record order.
+  reverse: false,
+});
+```
 
 ### com.atproto.sync
 
