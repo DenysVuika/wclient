@@ -27,13 +27,23 @@ export type WClientOptions = {
 
 export const DEFAULT_PDS_URL = 'https://pds.wsocial.network';
 
-function toBaseUrlGetter(baseUrl: BaseUrlOption = DEFAULT_PDS_URL): () => string {
+function toBaseUrlGetter(
+  baseUrl: BaseUrlOption = DEFAULT_PDS_URL,
+): () => string {
   return typeof baseUrl === 'function' ? baseUrl : () => baseUrl;
 }
 
 export type RepoService = {
+  /**
+   * Get information about an account and repository, including the list of collections.
+   * Does not require auth.
+   *
+   * @param repo The handle or DID of the repo.
+   */
   describeRepo: (repo: string) => Promise<DescribeRepoResponse>;
-  listRecords: (options: ListRecordsOptions) => Promise<CachedResponse<ListRecordsResponse>>;
+  listRecords: (
+    options: ListRecordsOptions,
+  ) => Promise<CachedResponse<ListRecordsResponse>>;
 };
 
 export type SyncService = {
@@ -46,7 +56,10 @@ export class WClient {
   readonly repo: RepoService;
   readonly sync: SyncService;
 
-  constructor({ baseUrl, authStore = createInMemoryAuthSessionStore() }: WClientOptions = {}) {
+  constructor({
+    baseUrl,
+    authStore = createInMemoryAuthSessionStore(),
+  }: WClientOptions = {}) {
     const getBaseUrl = toBaseUrlGetter(baseUrl);
     const authApiClient = createApiClient(getBaseUrl);
 
@@ -54,7 +67,8 @@ export class WClient {
     this.apiClient = createApiClient(getBaseUrl, this.auth);
     this.repo = {
       describeRepo: (repo: string) => describeRepo(this.apiClient, repo),
-      listRecords: (options: ListRecordsOptions) => listRecords(this.apiClient, options),
+      listRecords: (options: ListRecordsOptions) =>
+        listRecords(this.apiClient, options),
     };
     this.sync = {
       listRepos: () => listRepos(this.apiClient),
