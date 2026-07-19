@@ -3,11 +3,24 @@ export type CachedResponse<T> = { fromCache: boolean; data: T };
 
 const responseCache = new Map<string, Cached<unknown>>();
 
+function isHttpDebugEnabled(): boolean {
+  return (
+    process.env.WCLIENT_DEBUG_HTTP === '1' ||
+    process.env.WCLIENT_DEBUG_HTTP === 'true'
+  );
+}
+
+function debugHttp(...args: unknown[]): void {
+  if (isHttpDebugEnabled()) {
+    console.debug(...args);
+  }
+}
+
 export async function fetchWithEtagCache<T>(
   key: string,
   url: string,
   init: RequestInit,
-  fetchImpl: typeof fetch = fetch
+  fetchImpl: typeof fetch = fetch,
 ): Promise<CachedResponse<T>> {
   const existing = responseCache.get(key) as Cached<T> | undefined;
   const requestHeaders = new Headers(init.headers);
@@ -20,8 +33,8 @@ export async function fetchWithEtagCache<T>(
     headers: requestHeaders,
   });
 
-  console.log('Response status:', res.status);
-  console.log('Response headers:', res.headers);
+  debugHttp('Response status:', res.status);
+  debugHttp('Response headers:', res.headers);
 
   if (res.status === 304 && existing) {
     return { fromCache: true, data: existing.data };
@@ -35,7 +48,7 @@ export async function fetchWithEtagCache<T>(
 
   // Some endpoints return 200 even when content is unchanged.
   if (etag && existing && etag === existing.etag) {
-    console.log('ETag matches cached value. Returning cached data.');
+    debugHttp('ETag matches cached value. Returning cached data.');
     return { fromCache: true, data: existing.data };
   }
 

@@ -240,13 +240,13 @@ async function main(): Promise<void> {
         ...(cursor !== undefined ? { cursor } : {}),
         ...(flags['reverse'] === true ? { reverse: true } : {}),
       });
-      console.log(JSON.stringify(result, null, 2));
+      console.log(JSON.stringify(result.data, null, 2));
       break;
     }
 
     case 'list-repos': {
       const result = await client.sync.listRepos();
-      console.log(JSON.stringify(result, null, 2));
+      console.log(JSON.stringify(result.data, null, 2));
       break;
     }
 

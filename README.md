@@ -50,6 +50,8 @@ Add a `.env` file at the repo root (or wherever you run the command from) with y
 W_USERNAME=alice.wsocial.network
 W_PASSWORD=your-app-password
 W_SERVER=https://pds.wsocial.network  # optional, overrides the default PDS URL
+WCLIENT_DEBUG_AUTH=0                 # optional, set to 1/true to debug auth/session flow
+WCLIENT_DEBUG_HTTP=0                 # optional, set to 1/true to debug HTTP/cache details
 ```
 
 Then pass `--auth` to enable authentication. The session is cached in `.wclient-auth-session.json`
