@@ -1,5 +1,11 @@
 # wclient
 
+## 0.1.5
+
+### Patch Changes
+
+- c37c51f: Improved client api
+
 ## 0.1.4
 
 ### Patch Changes
