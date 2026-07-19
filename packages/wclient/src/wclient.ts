@@ -3,8 +3,8 @@ import {
   listRecords,
   listRepos,
   type ListRecordsOptions,
-  type ListReposResponse,
   type RepoService,
+  type SyncService,
 } from './api';
 import {
   createAuth,
@@ -14,7 +14,6 @@ import {
   type LoginOptions,
   type Session,
 } from './auth';
-import { type CachedResponse } from './http';
 import { createApiClient, type ApiClient } from './http/client';
 
 type BaseUrlOption = string | (() => string);
@@ -25,10 +24,6 @@ export type WClientOptions = {
 };
 
 export const DEFAULT_PDS_URL = 'https://pds.wsocial.network';
-
-export type SyncService = {
-  listRepos: () => Promise<CachedResponse<ListReposResponse>>;
-};
 
 export class WClient {
   readonly auth: AuthClient;

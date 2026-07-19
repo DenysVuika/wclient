@@ -7,4 +7,10 @@ export {
   type RepoService,
   type RepoRecord,
 } from './repo';
-export { listRepos, type ListReposResponse, type RepoStatus, type RepoSummary } from './sync';
+export {
+  listRepos,
+  type ListReposResponse,
+  type RepoStatus,
+  type RepoSummary,
+  type SyncService,
+} from './sync';

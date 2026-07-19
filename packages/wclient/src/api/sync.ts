@@ -16,6 +16,10 @@ export type ListReposResponse = {
   cursor?: string;
 };
 
+export type SyncService = {
+  listRepos: () => Promise<CachedResponse<ListReposResponse>>;
+};
+
 export async function listRepos(api: ApiClient): Promise<CachedResponse<ListReposResponse>> {
   return api.requestWithCache<ListReposResponse>('com.atproto.sync.listRepos', {
     path: 'com.atproto.sync.listRepos',
