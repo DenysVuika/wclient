@@ -26,7 +26,7 @@ export type ListRecordsOptions = {
    */
   repo: string;
   /**
-   * Maximum number of records to return.
+   * The number of records to return. Min: 1, Max: 100. Default: 50.
    */
   limit?: number;
   /**
@@ -34,7 +34,7 @@ export type ListRecordsOptions = {
    */
   cursor?: string;
   /**
-   * Reverse the order of the returned records.
+   * Flag to reverse the order of the returned records.
    */
   reverse?: boolean;
   /**
@@ -43,6 +43,36 @@ export type ListRecordsOptions = {
   collection: string;
 };
 
+export type RepoService = {
+  /**
+   * Get information about an account and repository, including the list of collections.
+   * Does not require auth.
+   *
+   * @param repo The handle or DID of the repo.
+   */
+  describeRepo: (repo: string) => Promise<DescribeRepoResponse>;
+  /**
+   * List a range of records in a repository, matching a specific collection.
+   * Does not require auth.
+   *
+   * @param options Query parameters for listing records.
+   */
+  listRecords: (
+    options: ListRecordsOptions,
+  ) => Promise<CachedResponse<ListRecordsResponse>>;
+};
+
+/**
+ * List a range of records in a repository, matching a specific collection.
+ * Does not require auth.
+ *
+ * Query parameters:
+ * - repo (string, format: at-identifier, required): The handle or DID of the repo.
+ * - limit (integer, min: 1, max: 100, default: 50): The number of records to return.
+ * - cursor (string): Cursor returned from a previous page of results.
+ * - reverse (boolean): Flag to reverse the order of the returned records.
+ * - collection (string, format: nsid, required): The NSID of the record type.
+ */
 export async function listRecords(
   api: ApiClient,
   options: ListRecordsOptions,

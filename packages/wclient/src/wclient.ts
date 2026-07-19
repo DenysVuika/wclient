@@ -2,10 +2,9 @@ import {
   describeRepo,
   listRecords,
   listRepos,
-  type DescribeRepoResponse,
   type ListRecordsOptions,
-  type ListRecordsResponse,
   type ListReposResponse,
+  type RepoService,
 } from './api';
 import {
   createAuth,
@@ -32,19 +31,6 @@ function toBaseUrlGetter(
 ): () => string {
   return typeof baseUrl === 'function' ? baseUrl : () => baseUrl;
 }
-
-export type RepoService = {
-  /**
-   * Get information about an account and repository, including the list of collections.
-   * Does not require auth.
-   *
-   * @param repo The handle or DID of the repo.
-   */
-  describeRepo: (repo: string) => Promise<DescribeRepoResponse>;
-  listRecords: (
-    options: ListRecordsOptions,
-  ) => Promise<CachedResponse<ListRecordsResponse>>;
-};
 
 export type SyncService = {
   listRepos: () => Promise<CachedResponse<ListReposResponse>>;
