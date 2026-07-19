@@ -26,9 +26,7 @@ function debugAuth(message: string): void {
   }
 }
 
-export function createInMemoryAuthSessionStore(
-  initialSession: Session | null = null,
-): AuthSessionStore {
+export function createInMemoryAuthSessionStore(initialSession: Session | null = null): AuthSessionStore {
   let session = initialSession;
 
   return {
@@ -42,9 +40,7 @@ export function createInMemoryAuthSessionStore(
   };
 }
 
-export function createFileAuthSessionStore(
-  filePath: string,
-): AuthSessionStore {
+export function createFileAuthSessionStore(filePath: string): AuthSessionStore {
   mkdirSync(dirname(filePath), { recursive: true });
 
   let session: Session | null = null;

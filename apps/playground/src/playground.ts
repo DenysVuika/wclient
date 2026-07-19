@@ -1,21 +1,20 @@
 import * as dotenv from 'dotenv';
 import { join } from 'node:path';
-import { api, auth, http } from 'wclient';
+import { WClient, auth } from 'wclient';
 import { getBlueskyServer } from './env';
 
 dotenv.config();
 
-const baseApi = http.createApiClient(getBlueskyServer);
-const authStore = auth.createFileAuthSessionStore(
-  join(process.cwd(), '.wclient-auth-session.json'),
-);
-const authClient = auth.createAuth(baseApi, authStore);
-const apiClient = http.createApiClient(getBlueskyServer, authClient);
+const authStore = auth.createFileAuthSessionStore(join(process.cwd(), '.wclient-auth-session.json'));
+const client = new WClient({
+  baseUrl: getBlueskyServer,
+  authStore,
+});
 
 async function main() {
   const session =
-    authClient.getSession() ??
-    (await authClient.login({
+    client.getSession() ??
+    (await client.login({
       identifier: process.env.BLUESKY_USERNAME,
       password: process.env.BLUESKY_PASSWORD,
     }));
@@ -27,7 +26,7 @@ async function main() {
 
   console.log('Logged in successfully.');
 
-  const repoInfo = await api.describeRepo(apiClient, session.did);
+  const repoInfo = await client.repo.describeRepo(session.did);
   console.log('Describe repo:', {
     did: repoInfo.did,
     handle: repoInfo.handle,
