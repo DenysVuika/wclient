@@ -5,6 +5,9 @@
   "author": "Denys Vuika <denys.vuika@gmail.com>",
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
+  "bin": {
+    "wclient": "./dist/cli.mjs"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.mts",
@@ -27,7 +30,7 @@
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
-    "build": "tsdown",
+    "build": "tsdown && chmod +x dist/cli.mjs",
     "prepack": "pnpm build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

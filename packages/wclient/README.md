@@ -80,6 +80,63 @@ const records = await client.repo.listRecords({
 - `GET /xrpc/com.atproto.sync.listRepos`
   - Helper: `client.sync.listRepos()`
 
+## CLI
+
+`wclient` also ships with a command-line interface. Run it with `npx` without installing:
+
+```bash
+npx wclient <command> [options]
+```
+
+### Commands
+
+#### `describe-repo <repo>`
+
+Get information about an account and repository.
+
+```bash
+npx wclient describe-repo alice.wsocial.network
+```
+
+#### `list-records`
+
+List records in a repository collection.
+
+```bash
+npx wclient list-records --repo alice.wsocial.network --collection app.bsky.feed.post
+npx wclient list-records --repo alice.wsocial.network --collection app.bsky.feed.post --limit 10
+npx wclient list-records --repo alice.wsocial.network --collection app.bsky.feed.post --cursor <cursor> --reverse
+```
+
+Options:
+
+| Flag | Required | Description |
+|---|---|---|
+| `--repo` | yes | Handle or DID of the repository |
+| `--collection` | yes | NSID of the collection (e.g. `app.bsky.feed.post`) |
+| `--limit` | no | Number of records to return (1–100, default 50) |
+| `--cursor` | no | Pagination cursor from a previous response |
+| `--reverse` | no | Reverse the order of returned records |
+
+#### `list-repos`
+
+List all repositories on the PDS.
+
+```bash
+npx wclient list-repos
+```
+
+### Global options
+
+| Flag | Description |
+|---|---|
+| `--base-url <url>` | Override the default PDS URL |
+| `--help` | Show help |
+
+```bash
+npx wclient --base-url https://my.pds.example list-repos
+```
+
 ## Exported modules
 
 - `WClient`: convenience wrapper for auth and namespaced API access
