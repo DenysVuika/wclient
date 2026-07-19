@@ -20,11 +20,13 @@ import { createApiClient, type ApiClient } from './http/client';
 type BaseUrlOption = string | (() => string);
 
 export type WClientOptions = {
-  baseUrl: BaseUrlOption;
+  baseUrl?: BaseUrlOption;
   authStore?: AuthSessionStore;
 };
 
-function toBaseUrlGetter(baseUrl: BaseUrlOption): () => string {
+export const DEFAULT_PDS_URL = 'https://pds.wsocial.network';
+
+function toBaseUrlGetter(baseUrl: BaseUrlOption = DEFAULT_PDS_URL): () => string {
   return typeof baseUrl === 'function' ? baseUrl : () => baseUrl;
 }
 
@@ -39,7 +41,7 @@ export class WClient {
     listRepos: () => Promise<CachedResponse<ListReposResponse>>;
   };
 
-  constructor({ baseUrl, authStore = createInMemoryAuthSessionStore() }: WClientOptions) {
+  constructor({ baseUrl, authStore = createInMemoryAuthSessionStore() }: WClientOptions = {}) {
     const getBaseUrl = toBaseUrlGetter(baseUrl);
     const authApiClient = createApiClient(getBaseUrl);
 

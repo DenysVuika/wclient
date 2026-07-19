@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { WClient } from './wclient';
+import { DEFAULT_PDS_URL, WClient } from './wclient';
 
 describe('WClient', () => {
   afterEach(() => {
@@ -52,5 +52,31 @@ describe('WClient', () => {
     expect(client.getSession()).toEqual(session);
     expect(result).toEqual(repoInfo);
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('uses DEFAULT_PDS_URL when baseUrl is omitted', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          did: 'did:plc:default',
+          didDoc: { id: 'did:plc:default' },
+          handle: 'default.test',
+          collections: [],
+          handleIsCorrect: true,
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    );
+    vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
+
+    const client = new WClient();
+
+    await client.repo.describeRepo('did:plc:default');
+
+    const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe(`${DEFAULT_PDS_URL}/xrpc/com.atproto.repo.describeRepo?repo=did%3Aplc%3Adefault`);
   });
 });

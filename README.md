@@ -9,6 +9,7 @@ Minimalistic TypeScript client library for the W social media platform, containi
 
 - Exports reusable `api`, `auth`, and `http` modules from the package root.
 - Exposes a higher-level `WClient` wrapper for common authenticated flows.
+- Defaults to `DEFAULT_PDS_URL` when you do not provide a custom PDS URL.
 - Uses an in-memory auth session store by default, with optional pluggable persistence.
 - Auto-refreshes access tokens on `401` and retries once.
 - Calls a small set of typed API helpers.
@@ -47,23 +48,28 @@ Quick start:
 ```ts
 import { WClient } from 'wclient';
 
-const client = new WClient({
-  baseUrl: process.env.BLUESKY_SERVER ?? '',
-});
+const client = new WClient();
 
 const repoInfo = await client.repo.describeRepo('did:plc:example');
 console.log(repoInfo.handle);
 ```
 
-Authenticated example:
+Use a custom PDS URL when needed:
 
 ```ts
-import { WClient, auth } from 'wclient';
+import { WClient } from 'wclient';
 
 const client = new WClient({
   baseUrl: process.env.BLUESKY_SERVER ?? '',
-  authStore: auth.createInMemoryAuthSessionStore(),
 });
+```
+
+Authenticated example:
+
+```ts
+import { WClient } from 'wclient';
+
+const client = new WClient();
 
 const session = await client.login({
   identifier: process.env.BLUESKY_USERNAME,

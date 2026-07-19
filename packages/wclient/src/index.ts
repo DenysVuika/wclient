@@ -1,4 +1,4 @@
 export * as api from './api';
 export * as auth from './auth';
 export * as http from './http';
-export { WClient, type WClientOptions } from './wclient';
+export { WClient, type WClientOptions, DEFAULT_PDS_URL } from './wclient';

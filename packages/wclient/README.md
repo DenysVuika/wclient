@@ -13,23 +13,28 @@ npm install wclient
 ```ts
 import { WClient } from 'wclient';
 
-const client = new WClient({
-  baseUrl: process.env.BLUESKY_SERVER ?? '',
-});
+const client = new WClient();
 
 const repoInfo = await client.repo.describeRepo('did:plc:example');
 console.log(repoInfo.handle);
 ```
 
-Authenticated example:
+Use a custom PDS URL when needed:
 
 ```ts
-import { WClient, auth } from 'wclient';
+import { WClient } from 'wclient';
 
 const client = new WClient({
   baseUrl: process.env.BLUESKY_SERVER ?? '',
-  authStore: auth.createInMemoryAuthSessionStore(),
 });
+```
+
+Authenticated example:
+
+```ts
+import { WClient } from 'wclient';
+
+const client = new WClient();
 
 const session = await client.login({
   identifier: process.env.BLUESKY_USERNAME,
@@ -64,6 +69,7 @@ if (session) {
 ## Exported modules
 
 - `WClient`: convenience wrapper for auth and namespaced API access
+- `DEFAULT_PDS_URL`: default PDS endpoint used by `WClient`
 - `api`: low-level typed endpoint helpers and response types
 - `auth`: login/refresh flow, session store interfaces, and defaults
 - `http`: low-level request client and ETag cache helpers
