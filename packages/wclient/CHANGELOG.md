@@ -1,5 +1,11 @@
 # wclient
 
+## 0.1.6
+
+### Patch Changes
+
+- cd1ab0b: Add CLI support with auth/env handling and documentation updates
+
 ## 0.1.5
 
 ### Patch Changes
