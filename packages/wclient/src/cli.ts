@@ -1,6 +1,6 @@
 import { DEFAULT_PDS_URL, WClient } from './wclient.js';
 
-const rawArgs = process.argv.slice(2);
+const rawArgs = process.argv.slice(2).filter((arg) => arg !== '--');
 const [command, ...rest] = rawArgs;
 
 type Flags = Record<string, string | boolean>;

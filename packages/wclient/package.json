@@ -31,6 +31,7 @@
   "type": "module",
   "scripts": {
     "build": "tsdown && chmod +x dist/cli.mjs",
+    "cli": "node ./dist/cli.mjs",
     "prepack": "pnpm build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
