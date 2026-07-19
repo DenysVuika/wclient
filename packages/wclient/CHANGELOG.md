@@ -1,5 +1,11 @@
 # wclient
 
+## 0.1.7
+
+### Patch Changes
+
+- dcaa873: Enhance CLI and HTTP caching with debug options for improved troubleshooting
+
 ## 0.1.6
 
 ### Patch Changes
