@@ -7,7 +7,7 @@ export async function fetchWithEtagCache<T>(
   key: string,
   url: string,
   init: RequestInit,
-  fetchImpl: typeof fetch = fetch,
+  fetchImpl: typeof fetch = fetch
 ): Promise<CachedResponse<T>> {
   const existing = responseCache.get(key) as Cached<T> | undefined;
   const requestHeaders = new Headers(init.headers);

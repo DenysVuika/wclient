@@ -35,10 +35,7 @@ function toQueryString(query?: Record<string, QueryValue>): string {
 }
 
 function createFetchWithAuthRetry(auth?: AuthProvider) {
-  return async (
-    input: RequestInfo | URL,
-    init?: RequestInit,
-  ): Promise<Response> => {
+  return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const response = await fetch(input, init);
 
     if (response.status !== 401 || !auth) {
@@ -77,10 +74,7 @@ export function createApiClient(getBaseUrl: () => string, auth?: AuthProvider) {
     return `${baseUrl}/xrpc/${path}${toQueryString(query)}`;
   }
 
-  function buildHeaders(
-    authToken?: string,
-    headers?: HeadersInit,
-  ): HeadersInit {
+  function buildHeaders(authToken?: string, headers?: HeadersInit): HeadersInit {
     const mergedHeaders = new Headers(headers);
     mergedHeaders.set('Accept-Encoding', 'gzip');
     if (authToken) {
@@ -102,10 +96,7 @@ export function createApiClient(getBaseUrl: () => string, auth?: AuthProvider) {
     return fetchWithAuthRetry(url, requestInit);
   }
 
-  async function requestWithCache<T>(
-    cacheKey: string,
-    options: ApiRequestOptions,
-  ): Promise<CachedResponse<T>> {
+  async function requestWithCache<T>(cacheKey: string, options: ApiRequestOptions): Promise<CachedResponse<T>> {
     const { path, method = 'GET', query, headers, authToken, body } = options;
     const url = buildUrl(path, query);
     const requestInit: RequestInit = {
@@ -114,12 +105,7 @@ export function createApiClient(getBaseUrl: () => string, auth?: AuthProvider) {
       ...(body !== undefined && { body }),
     };
 
-    return fetchWithEtagCache<T>(
-      cacheKey,
-      url,
-      requestInit,
-      fetchWithAuthRetry,
-    );
+    return fetchWithEtagCache<T>(cacheKey, url, requestInit, fetchWithAuthRetry);
   }
 
   return {

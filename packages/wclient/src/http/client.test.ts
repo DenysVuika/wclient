@@ -12,7 +12,7 @@ describe('createApiClient', () => {
       new Response(JSON.stringify({ ok: true }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
-      }),
+      })
     );
     vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
 
@@ -27,9 +27,7 @@ describe('createApiClient', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe(
-      'https://example.test/xrpc/com.atproto.repo.describeRepo?repo=did%3Aplc%3Aabc&limit=10',
-    );
+    expect(url).toBe('https://example.test/xrpc/com.atproto.repo.describeRepo?repo=did%3Aplc%3Aabc&limit=10');
 
     const headers = new Headers(init.headers);
     expect(headers.get('Authorization')).toBe('Bearer jwt-token');

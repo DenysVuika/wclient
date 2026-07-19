@@ -31,10 +31,7 @@ export type AuthClient = AuthProvider & {
   clear: () => void;
 };
 
-export function createAuth(
-  api: ApiClient,
-  store: AuthSessionStore = createInMemoryAuthSessionStore(),
-): AuthClient {
+export function createAuth(api: ApiClient, store: AuthSessionStore = createInMemoryAuthSessionStore()): AuthClient {
   async function login({ identifier, password }: LoginOptions): Promise<Session | null> {
     const response = await api.request({
       path: 'com.atproto.server.createSession',

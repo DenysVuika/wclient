@@ -20,26 +20,17 @@ export type DescribeRepoResponse = {
   handleIsCorrect: boolean;
 };
 
-export async function listRecords(
-  api: ApiClient,
-  repoDid: string,
-): Promise<CachedResponse<ListRecordsResponse>> {
-  return api.requestWithCache<ListRecordsResponse>(
-    'com.atproto.repo.listRecords',
-    {
-      path: 'com.atproto.repo.listRecords',
-      query: {
-        repo: repoDid,
-        collection: 'app.bsky.feed.post',
-      },
+export async function listRecords(api: ApiClient, repoDid: string): Promise<CachedResponse<ListRecordsResponse>> {
+  return api.requestWithCache<ListRecordsResponse>('com.atproto.repo.listRecords', {
+    path: 'com.atproto.repo.listRecords',
+    query: {
+      repo: repoDid,
+      collection: 'app.bsky.feed.post',
     },
-  );
+  });
 }
 
-export async function describeRepo(
-  api: ApiClient,
-  repo: string,
-): Promise<DescribeRepoResponse> {
+export async function describeRepo(api: ApiClient, repo: string): Promise<DescribeRepoResponse> {
   const response = await api.request({
     path: 'com.atproto.repo.describeRepo',
     query: {
@@ -48,9 +39,7 @@ export async function describeRepo(
   });
 
   if (!response.ok) {
-    throw new Error(
-      `Request failed: ${response.status} ${response.statusText}`,
-    );
+    throw new Error(`Request failed: ${response.status} ${response.statusText}`);
   }
 
   return (await response.json()) as DescribeRepoResponse;

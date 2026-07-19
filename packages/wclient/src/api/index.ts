@@ -5,9 +5,4 @@ export {
   type ListRecordsResponse,
   type RepoRecord,
 } from './repo';
-export {
-  listRepos,
-  type ListReposResponse,
-  type RepoStatus,
-  type RepoSummary,
-} from './sync';
+export { listRepos, type ListReposResponse, type RepoStatus, type RepoSummary } from './sync';
