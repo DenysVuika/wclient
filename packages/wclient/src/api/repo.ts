@@ -57,9 +57,7 @@ export type RepoService = {
    *
    * @param options Query parameters for listing records.
    */
-  listRecords: (
-    options: ListRecordsOptions,
-  ) => Promise<CachedResponse<ListRecordsResponse>>;
+  listRecords: (options: ListRecordsOptions) => Promise<CachedResponse<ListRecordsResponse>>;
 };
 
 /**
@@ -75,15 +73,12 @@ export type RepoService = {
  */
 export async function listRecords(
   api: ApiClient,
-  options: ListRecordsOptions,
+  options: ListRecordsOptions
 ): Promise<CachedResponse<ListRecordsResponse>> {
-  return api.requestWithCache<ListRecordsResponse>(
-    `com.atproto.repo.listRecords:${JSON.stringify(options)}`,
-    {
-      path: 'com.atproto.repo.listRecords',
-      query: options,
-    },
-  );
+  return api.requestWithCache<ListRecordsResponse>(`com.atproto.repo.listRecords:${JSON.stringify(options)}`, {
+    path: 'com.atproto.repo.listRecords',
+    query: options,
+  });
 }
 
 /**
@@ -92,10 +87,7 @@ export async function listRecords(
  *
  * @param repo The handle or DID of the repo.
  */
-export async function describeRepo(
-  api: ApiClient,
-  repo: string,
-): Promise<DescribeRepoResponse> {
+export async function describeRepo(api: ApiClient, repo: string): Promise<DescribeRepoResponse> {
   const response = await api.request({
     path: 'com.atproto.repo.describeRepo',
     query: {
@@ -104,9 +96,7 @@ export async function describeRepo(
   });
 
   if (!response.ok) {
-    throw new Error(
-      `Request failed: ${response.status} ${response.statusText}`,
-    );
+    throw new Error(`Request failed: ${response.status} ${response.statusText}`);
   }
 
   return (await response.json()) as DescribeRepoResponse;

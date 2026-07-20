@@ -78,7 +78,17 @@ const records = await client.repo.listRecords({
 ### com.atproto.sync
 
 - `GET /xrpc/com.atproto.sync.listRepos`
-  - Helper: `client.sync.listRepos()`
+  - Helper: `client.sync.listRepos(options?)`
+  - Example:
+
+```ts
+const page = await client.sync.listRepos({
+  // Optional pagination cursor from a previous response.
+  cursor: undefined,
+  // Optional number of repos in one page.
+  limit: 500,
+});
+```
 
 ## CLI
 
@@ -113,13 +123,13 @@ npx wclient --env-file .env --auth list-records --collection "app.bsky.feed.post
 
 Options:
 
-| Flag | Required | Description |
-|---|---|---|
-| `--repo` | yes* | Handle or DID of the repository |
-| `--collection` | yes | NSID of the collection (e.g. `app.bsky.feed.post`) |
-| `--limit` | no | Number of records to return (1–100, default 50) |
-| `--cursor` | no | Pagination cursor from a previous response |
-| `--reverse` | no | Reverse the order of returned records |
+| Flag           | Required | Description                                        |
+| -------------- | -------- | -------------------------------------------------- |
+| `--repo`       | yes*     | Handle or DID of the repository                    |
+| `--collection` | yes      | NSID of the collection (e.g. `app.bsky.feed.post`) |
+| `--limit`      | no       | Number of records to return (1–100, default 50)    |
+| `--cursor`     | no       | Pagination cursor from a previous response         |
+| `--reverse`    | no       | Reverse the order of returned records              |
 
 `*` `--repo` can be omitted when using `--auth`; in that case, the CLI uses the authenticated session DID.
 
@@ -131,13 +141,51 @@ List all repositories on the PDS.
 npx wclient list-repos
 ```
 
+#### `view <report>`
+
+Render a custom report.
+
+Currently available reports:
+
+- `pds.users`: shows total users, active users, and inactive users across all pages from `com.atproto.sync.listRepos`
+
+```bash
+npx wclient view pds.users
+npx wclient view pds.users --quiet
+npx wclient view pds.users --json
+```
+
+Table output example:
+
+```text
+PDS Users Report
++----------------+-------+
+| Metric         | Value |
++----------------+-------+
+| Users          | 1,234 |
+| Active users   |   987 |
+| Inactive users |   247 |
++----------------+-------+
+```
+
+JSON output example:
+
+```json
+{
+  "users": 1234,
+  "activeUsers": 987,
+  "inactiveUsers": 247
+}
+```
+
 ### Global options
 
-| Flag | Description |
-|---|---|
-| `--env-file <path>` | Load environment variables from a specific file |
-| `--base-url <url>` | Override the default PDS URL |
-| `--help` | Show help |
+| Flag                | Description                                                                     |
+| ------------------- | ------------------------------------------------------------------------------- |
+| `--env-file <path>` | Load environment variables from a specific file                                 |
+| `--base-url <url>`  | Override the default PDS URL                                                    |
+| `--quiet`           | Suppress non-essential CLI output (for example loading progress in `view` mode) |
+| `--help`            | Show help                                                                       |
 
 ```bash
 npx wclient --env-file .env.local --auth describe-repo
@@ -146,11 +194,11 @@ npx wclient --base-url https://my.pds.example list-repos
 
 ## Environment variables
 
-| Variable | Description |
-|---|---|
-| `W_USERNAME` | Handle or DID used for authentication |
-| `W_PASSWORD` | App password used for authentication |
-| `W_SERVER` | PDS base URL (overrides the default `https://pds.wsocial.network`) |
+| Variable             | Description                                                                  |
+| -------------------- | ---------------------------------------------------------------------------- |
+| `W_USERNAME`         | Handle or DID used for authentication                                        |
+| `W_PASSWORD`         | App password used for authentication                                         |
+| `W_SERVER`           | PDS base URL (overrides the default `https://pds.wsocial.network`)           |
 | `WCLIENT_DEBUG_AUTH` | Set to `1` or `true` to log auth, session restore, and token refresh details |
 
 ## Exported modules

@@ -4,10 +4,7 @@ export type CachedResponse<T> = { fromCache: boolean; data: T };
 const responseCache = new Map<string, Cached<unknown>>();
 
 function isHttpDebugEnabled(): boolean {
-  return (
-    process.env.WCLIENT_DEBUG_HTTP === '1' ||
-    process.env.WCLIENT_DEBUG_HTTP === 'true'
-  );
+  return process.env.WCLIENT_DEBUG_HTTP === '1' || process.env.WCLIENT_DEBUG_HTTP === 'true';
 }
 
 function debugHttp(...args: unknown[]): void {
@@ -20,7 +17,7 @@ export async function fetchWithEtagCache<T>(
   key: string,
   url: string,
   init: RequestInit,
-  fetchImpl: typeof fetch = fetch,
+  fetchImpl: typeof fetch = fetch
 ): Promise<CachedResponse<T>> {
   const existing = responseCache.get(key) as Cached<T> | undefined;
   const requestHeaders = new Headers(init.headers);
