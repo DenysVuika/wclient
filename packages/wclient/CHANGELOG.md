@@ -1,5 +1,11 @@
 # wclient
 
+## 0.1.8
+
+### Patch Changes
+
+- 0c35bcb: add view pds.users report command
+
 ## 0.1.7
 
 ### Patch Changes
