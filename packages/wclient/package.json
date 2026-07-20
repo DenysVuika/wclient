@@ -6,7 +6,7 @@
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "bin": {
-    "wclient": "./dist/cli.mjs"
+    "wclient": "./bin/wclient.mjs"
   },
   "exports": {
     ".": {
@@ -15,7 +15,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "bin"
   ],
   "keywords": [],
   "homepage": "https://github.com/DenysVuika/wclient#readme",

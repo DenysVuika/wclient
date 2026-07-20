@@ -4,6 +4,7 @@
 
 ### Patch Changes
 
+- 55d594a: Improved release process
 - dcaa873: Enhance CLI and HTTP caching with debug options for improved troubleshooting
 
 ## 0.1.6
