@@ -2,6 +2,7 @@ import * as dotenv from 'dotenv';
 import { existsSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { createFileAuthSessionStore, type Session } from './auth/index.js';
+import { getPdsUsersReport, renderPdsUsersReportTable } from './view/pds.users.js';
 import { DEFAULT_PDS_URL, WClient } from './wclient.js';
 
 function extractEnvFileArg(args: string[]): string | null | undefined {
@@ -62,9 +63,7 @@ function findWorkspaceRoot(startDir: string): string | null {
 function loadEnv(explicitEnvFile: string | undefined): void {
   if (explicitEnvFile) {
     const baseDir = findWorkspaceRoot(process.cwd()) ?? process.cwd();
-    const envPath = isAbsolute(explicitEnvFile)
-      ? explicitEnvFile
-      : resolve(baseDir, explicitEnvFile);
+    const envPath = isAbsolute(explicitEnvFile) ? explicitEnvFile : resolve(baseDir, explicitEnvFile);
 
     if (!existsSync(envPath)) {
       console.error(`Error: --env-file not found: ${envPath}`);
@@ -78,7 +77,7 @@ function loadEnv(explicitEnvFile: string | undefined): void {
   const workspaceRoot = findWorkspaceRoot(process.cwd());
   const candidateDirs = [process.env.INIT_CWD, workspaceRoot, process.cwd()].filter(
     (value, index, all): value is string =>
-      typeof value === 'string' && value.length > 0 && all.indexOf(value) === index,
+      typeof value === 'string' && value.length > 0 && all.indexOf(value) === index
   );
 
   for (const dir of candidateDirs) {
@@ -100,15 +99,10 @@ if (explicitEnvFile === null) {
 
 loadEnv(explicitEnvFile);
 
-const rawArgs = stripEnvFileArg(process.argv.slice(2)).filter(
-  (arg) => arg !== '--',
-);
+const rawArgs = stripEnvFileArg(process.argv.slice(2)).filter((arg) => arg !== '--');
 const commandIndex = rawArgs.findIndex((arg) => !arg.startsWith('--'));
 const command = commandIndex === -1 ? undefined : rawArgs[commandIndex];
-const rest =
-  commandIndex === -1
-    ? rawArgs
-    : rawArgs.filter((_, index) => index !== commandIndex);
+const rest = commandIndex === -1 ? rawArgs : rawArgs.filter((_, index) => index !== commandIndex);
 
 type Flags = Record<string, string | boolean>;
 
@@ -145,17 +139,22 @@ Commands:
   describe-repo <repo>          Get information about an account and repository
   list-records                  List records in a repository collection
   list-repos                    List repositories on the PDS
+  view <report>                 Render a custom report
 
 Global Options:
   --env-file <path>             Load environment variables from a specific file
   --base-url <url>              PDS base URL (default: ${DEFAULT_PDS_URL})
   --auth                        Authenticate using W_USERNAME and W_PASSWORD
+  --quiet                       Suppress non-essential CLI output
   --help                        Show this help message
 
 Examples:
   wclient describe-repo alice.wsocial.network
   wclient list-records --repo alice.wsocial.network --collection app.bsky.feed.post --limit 10
-  wclient list-repos`);
+  wclient list-repos
+  wclient view pds.users
+  wclient view pds.users --quiet
+  wclient view pds.users --json`);
 }
 
 async function main(): Promise<void> {
@@ -165,10 +164,7 @@ async function main(): Promise<void> {
   }
 
   const { flags, positional } = parseArgs(rest);
-  const baseUrl =
-    typeof flags['base-url'] === 'string'
-      ? flags['base-url']
-      : process.env.W_SERVER;
+  const baseUrl = typeof flags['base-url'] === 'string' ? flags['base-url'] : process.env.W_SERVER;
 
   let session: Session | null = null;
   let client: WClient;
@@ -177,17 +173,12 @@ async function main(): Promise<void> {
     const identifier = process.env.W_USERNAME;
     const password = process.env.W_PASSWORD;
     if (!identifier || !password) {
-      console.error(
-        'Error: --auth requires W_USERNAME and W_PASSWORD to be set in the environment or .env file.',
-      );
+      console.error('Error: --auth requires W_USERNAME and W_PASSWORD to be set in the environment or .env file.');
       process.exit(1);
     }
-    const authStore = createFileAuthSessionStore(
-      join(process.cwd(), '.wclient-auth-session.json'),
-    );
+    const authStore = createFileAuthSessionStore(join(process.cwd(), '.wclient-auth-session.json'));
     client = new WClient({ ...(baseUrl ? { baseUrl } : {}), authStore });
-    session =
-      client.getSession() ?? (await client.login({ identifier, password }));
+    session = client.getSession() ?? (await client.login({ identifier, password }));
     if (!session) {
       console.error('Authentication failed.');
       process.exit(1);
@@ -198,10 +189,7 @@ async function main(): Promise<void> {
 
   switch (command) {
     case 'describe-repo': {
-      const repo =
-        positional[0] ??
-        (typeof flags['repo'] === 'string' ? flags['repo'] : undefined) ??
-        session?.did;
+      const repo = positional[0] ?? (typeof flags['repo'] === 'string' ? flags['repo'] : undefined) ?? session?.did;
       if (!repo) {
         console.error('Error: <repo> argument is required (or use --auth to use the authenticated DID).');
         console.error('Usage: wclient describe-repo [<repo>] [--auth]');
@@ -213,26 +201,19 @@ async function main(): Promise<void> {
     }
 
     case 'list-records': {
-      const repo =
-        (typeof flags['repo'] === 'string' ? flags['repo'] : undefined) ??
-        session?.did;
-      const collection =
-        typeof flags['collection'] === 'string'
-          ? flags['collection']
-          : undefined;
+      const repo = (typeof flags['repo'] === 'string' ? flags['repo'] : undefined) ?? session?.did;
+      const collection = typeof flags['collection'] === 'string' ? flags['collection'] : undefined;
       if (!repo || !collection) {
         console.error(
-          'Error: --collection is required; --repo is required unless using --auth with an authenticated session.',
+          'Error: --collection is required; --repo is required unless using --auth with an authenticated session.'
         );
         console.error(
-          'Usage: wclient list-records [--repo <repo>] --collection <nsid> [--limit N] [--cursor X] [--reverse] [--auth]',
+          'Usage: wclient list-records [--repo <repo>] --collection <nsid> [--limit N] [--cursor X] [--reverse] [--auth]'
         );
         process.exit(1);
       }
-      const limit =
-        typeof flags['limit'] === 'string' ? Number(flags['limit']) : undefined;
-      const cursor =
-        typeof flags['cursor'] === 'string' ? flags['cursor'] : undefined;
+      const limit = typeof flags['limit'] === 'string' ? Number(flags['limit']) : undefined;
+      const cursor = typeof flags['cursor'] === 'string' ? flags['cursor'] : undefined;
       const result = await client.repo.listRecords({
         repo,
         collection,
@@ -247,6 +228,55 @@ async function main(): Promise<void> {
     case 'list-repos': {
       const result = await client.sync.listRepos();
       console.log(JSON.stringify(result.data, null, 2));
+      break;
+    }
+
+    case 'view': {
+      const report = positional[0] ?? (typeof flags['report'] === 'string' ? flags['report'] : undefined);
+      const wantsJson = flags['json'] === true;
+      const quiet = flags['quiet'] === true;
+
+      if (!report) {
+        console.error('Error: <report> argument is required.');
+        console.error('Usage: wclient view <report> [--json] [--quiet] [--auth]');
+        console.error('Available reports: pds.users');
+        process.exit(1);
+      }
+
+      switch (report) {
+        case 'pds.users': {
+          if (wantsJson) {
+            const result = await getPdsUsersReport(client);
+            console.log(JSON.stringify(result, null, 2));
+          } else {
+            if (process.stderr.isTTY && !quiet) {
+              process.stderr.write('Loading pds.users report...\n');
+            }
+
+            const result = await getPdsUsersReport(client, {
+              onProgress: ({ pagesFetched, usersSoFar }) => {
+                if (!process.stderr.isTTY || quiet) return;
+                process.stderr.write(`Loading pds.users report... pages: ${pagesFetched}, users: ${usersSoFar}\r`);
+              },
+            });
+
+            if (process.stderr.isTTY && !quiet) {
+              process.stderr.write('\n');
+            }
+
+            const table = renderPdsUsersReportTable(result);
+            console.log(table);
+          }
+          break;
+        }
+
+        default: {
+          console.error(`Unknown report: ${report}`);
+          console.error('Available reports: pds.users');
+          process.exit(1);
+        }
+      }
+
       break;
     }
 

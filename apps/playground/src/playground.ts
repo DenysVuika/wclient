@@ -4,9 +4,7 @@ import { WClient, auth } from 'wclient';
 
 dotenv.config();
 
-const authStore = auth.createFileAuthSessionStore(
-  join(process.cwd(), '.wclient-auth-session.json'),
-);
+const authStore = auth.createFileAuthSessionStore(join(process.cwd(), '.wclient-auth-session.json'));
 const client = new WClient({
   ...(process.env.W_SERVER ? { baseUrl: process.env.W_SERVER } : {}),
   authStore,

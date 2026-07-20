@@ -9,6 +9,7 @@ export {
 } from './repo';
 export {
   listRepos,
+  type ListReposOptions,
   type ListReposResponse,
   type RepoStatus,
   type RepoSummary,

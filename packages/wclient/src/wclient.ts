@@ -2,6 +2,7 @@ import {
   describeRepo,
   listRecords,
   listRepos,
+  type ListReposOptions,
   type ListRecordsOptions,
   type RepoService,
   type SyncService,
@@ -31,25 +32,18 @@ export class WClient {
   readonly repo: RepoService;
   readonly sync: SyncService;
 
-  constructor({
-    baseUrl,
-    authStore = createInMemoryAuthSessionStore(),
-  }: WClientOptions = {}) {
-    const resolveBaseUrl =
-      typeof baseUrl === 'function'
-        ? baseUrl
-        : () => baseUrl ?? DEFAULT_PDS_URL;
+  constructor({ baseUrl, authStore = createInMemoryAuthSessionStore() }: WClientOptions = {}) {
+    const resolveBaseUrl = typeof baseUrl === 'function' ? baseUrl : () => baseUrl ?? DEFAULT_PDS_URL;
     const authApiClient = createApiClient(resolveBaseUrl);
 
     this.auth = createAuth(authApiClient, authStore);
     this.apiClient = createApiClient(resolveBaseUrl, this.auth);
     this.repo = {
       describeRepo: (repo: string) => describeRepo(this.apiClient, repo),
-      listRecords: (options: ListRecordsOptions) =>
-        listRecords(this.apiClient, options),
+      listRecords: (options: ListRecordsOptions) => listRecords(this.apiClient, options),
     };
     this.sync = {
-      listRepos: () => listRepos(this.apiClient),
+      listRepos: (options?: ListReposOptions) => listRepos(this.apiClient, options),
     };
   }
 

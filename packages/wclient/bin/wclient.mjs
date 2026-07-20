@@ -8,9 +8,7 @@ const binDir = dirname(fileURLToPath(import.meta.url));
 const cliPath = resolve(binDir, '../dist/cli.mjs');
 
 if (!existsSync(cliPath)) {
-  console.error(
-    'wclient CLI is not built yet. Run "pnpm --filter wclient build" in this workspace and try again.',
-  );
+  console.error('wclient CLI is not built yet. Run "pnpm --filter wclient build" in this workspace and try again.');
   process.exit(1);
 }
 

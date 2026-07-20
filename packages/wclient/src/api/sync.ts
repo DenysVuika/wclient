@@ -16,12 +16,26 @@ export type ListReposResponse = {
   cursor?: string;
 };
 
-export type SyncService = {
-  listRepos: () => Promise<CachedResponse<ListReposResponse>>;
+export type ListReposOptions = {
+  cursor?: string;
+  limit?: number;
 };
 
-export async function listRepos(api: ApiClient): Promise<CachedResponse<ListReposResponse>> {
+export type SyncService = {
+  listRepos: (options?: ListReposOptions) => Promise<CachedResponse<ListReposResponse>>;
+};
+
+export async function listRepos(
+  api: ApiClient,
+  options?: ListReposOptions
+): Promise<CachedResponse<ListReposResponse>> {
+  const query = {
+    ...(options?.cursor !== undefined ? { cursor: options.cursor } : {}),
+    ...(options?.limit !== undefined ? { limit: options.limit } : {}),
+  };
+
   return api.requestWithCache<ListReposResponse>('com.atproto.sync.listRepos', {
     path: 'com.atproto.sync.listRepos',
+    query,
   });
 }
