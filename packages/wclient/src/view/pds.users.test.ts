@@ -48,16 +48,19 @@ describe('pds.users report', () => {
   });
 
   it('renders an ascii table', () => {
-    const output = renderPdsUsersReportTable({
-      users: 1_000,
-      activeUsers: 750,
-      inactiveUsers: 250,
-    });
+    const output = renderPdsUsersReportTable(
+      {
+        users: 1_000,
+        activeUsers: 750,
+        inactiveUsers: 250,
+      },
+      new Date('2026-07-25T00:00:00Z')
+    );
 
-    expect(output).toContain('PDS Users Report');
-    expect(output).toContain('| Users          | 1,000 |');
+    expect(output).toContain('PDS Users: 25 July 2026');
     expect(output).toContain('| Active users   |   750 |');
     expect(output).toContain('| Inactive users |   250 |');
+    expect(output).toContain('| Total users    | 1,000 |');
   });
 
   it('reports pagination progress', async () => {

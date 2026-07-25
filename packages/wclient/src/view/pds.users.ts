@@ -63,11 +63,19 @@ function tableRow(metric: string, value: string, metricWidth: number, valueWidth
   return `| ${padRight(metric, metricWidth)} | ${padLeft(value, valueWidth)} |`;
 }
 
-export function renderPdsUsersReportTable(report: PdsUsersReport): string {
+function formatReportDate(date: Date): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(date);
+}
+
+export function renderPdsUsersReportTable(report: PdsUsersReport, date: Date = new Date()): string {
   const rows: Array<[string, string]> = [
-    ['Users', formatNumber(report.users)],
     ['Active users', formatNumber(report.activeUsers)],
     ['Inactive users', formatNumber(report.inactiveUsers)],
+    ['Total users', formatNumber(report.users)],
   ];
 
   const metricWidth = Math.max('Metric'.length, ...rows.map(([metric]) => metric.length));
@@ -75,7 +83,7 @@ export function renderPdsUsersReportTable(report: PdsUsersReport): string {
   const line = divider(metricWidth, valueWidth);
 
   const output = [
-    'PDS Users Report',
+    `PDS Users: ${formatReportDate(date)}`,
     line,
     tableRow('Metric', 'Value', metricWidth, valueWidth),
     line,

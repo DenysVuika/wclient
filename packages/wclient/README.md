@@ -147,7 +147,7 @@ Render a custom report.
 
 Currently available reports:
 
-- `pds.users`: shows total users, active users, and inactive users across all pages from `com.atproto.sync.listRepos`
+- `pds.users`: shows active users, inactive users, and total users across all pages from `com.atproto.sync.listRepos`
 
 ```bash
 npx wclient view pds.users
@@ -158,13 +158,13 @@ npx wclient view pds.users --json
 Table output example:
 
 ```text
-PDS Users Report
+PDS Users: 25 July 2026
 +----------------+-------+
 | Metric         | Value |
 +----------------+-------+
-| Users          | 1,234 |
 | Active users   |   987 |
 | Inactive users |   247 |
+| Total users    | 1,234 |
 +----------------+-------+
 ```
 
