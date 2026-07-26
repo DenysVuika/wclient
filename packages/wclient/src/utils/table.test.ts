@@ -21,7 +21,7 @@ describe('table utilities', () => {
         '| A           |     1 |',
         '| Long metric |    22 |',
         '+-------------+-------+',
-      ].join('\n'),
+      ].join('\n')
     );
   });
 
@@ -39,10 +39,8 @@ describe('table utilities', () => {
       renderAsciiTable({
         headers: ['A', 'B'],
         rows: [['only-a']],
-      }),
-    ).toThrow(
-      'Invalid table row: row column count does not match header column count.',
-    );
+      })
+    ).toThrow('Invalid table row: row column count does not match header column count.');
   });
 
   it('formats numbers in en-US style', () => {
@@ -53,21 +51,9 @@ describe('table utilities', () => {
     const output = renderAsciiTable({
       headers: ['#', 'DID', 'Handle'],
       rows: [
-        [
-          '6',
-          'did:plc:zdobx3dghonwfuqfdnaejg5x',
-          'Astrid Christofori (astridchristofori.eurosky.social)',
-        ],
-        [
-          '7',
-          'did:plc:i3cvsfgsmkmzfnksmaheumjy',
-          'Charli ✨ (awildfaerie.com)',
-        ],
-        [
-          '8',
-          'did:plc:5rms2ebhdngu24hgsu3s2hqd',
-          'AngryDutchman (angrydutchman.eurosky.social)',
-        ],
+        ['6', 'did:plc:zdobx3dghonwfuqfdnaejg5x', 'Astrid Christofori (astridchristofori.eurosky.social)'],
+        ['7', 'did:plc:i3cvsfgsmkmzfnksmaheumjy', 'Charli ✨ (awildfaerie.com)'],
+        ['8', 'did:plc:5rms2ebhdngu24hgsu3s2hqd', 'AngryDutchman (angrydutchman.eurosky.social)'],
       ],
       alignments: ['right', 'left', 'left'],
     });
