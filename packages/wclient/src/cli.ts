@@ -2,8 +2,14 @@ import * as dotenv from 'dotenv';
 import { existsSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { createFileAuthSessionStore, type Session } from './auth/index.js';
-import { getMeHatersReport, renderMeHatersReportTable } from './view/me.haters.js';
-import { getPdsUsersReport, renderPdsUsersReportTable } from './view/pds.users.js';
+import {
+  getMeHatersReport,
+  renderMeHatersReportTable,
+} from './view/me.haters.js';
+import {
+  getPdsUsersReport,
+  renderPdsUsersReportTable,
+} from './view/pds.users.js';
 import { DEFAULT_PDS_URL, WClient } from './wclient.js';
 
 function extractEnvFileArg(args: string[]): string | null | undefined {
@@ -64,7 +70,9 @@ function findWorkspaceRoot(startDir: string): string | null {
 function loadEnv(explicitEnvFile: string | undefined): void {
   if (explicitEnvFile) {
     const baseDir = findWorkspaceRoot(process.cwd()) ?? process.cwd();
-    const envPath = isAbsolute(explicitEnvFile) ? explicitEnvFile : resolve(baseDir, explicitEnvFile);
+    const envPath = isAbsolute(explicitEnvFile)
+      ? explicitEnvFile
+      : resolve(baseDir, explicitEnvFile);
 
     if (!existsSync(envPath)) {
       console.error(`Error: --env-file not found: ${envPath}`);
@@ -76,9 +84,15 @@ function loadEnv(explicitEnvFile: string | undefined): void {
   }
 
   const workspaceRoot = findWorkspaceRoot(process.cwd());
-  const candidateDirs = [process.env.INIT_CWD, workspaceRoot, process.cwd()].filter(
+  const candidateDirs = [
+    process.env.INIT_CWD,
+    workspaceRoot,
+    process.cwd(),
+  ].filter(
     (value, index, all): value is string =>
-      typeof value === 'string' && value.length > 0 && all.indexOf(value) === index
+      typeof value === 'string' &&
+      value.length > 0 &&
+      all.indexOf(value) === index,
   );
 
   for (const dir of candidateDirs) {
@@ -100,10 +114,15 @@ if (explicitEnvFile === null) {
 
 loadEnv(explicitEnvFile);
 
-const rawArgs = stripEnvFileArg(process.argv.slice(2)).filter((arg) => arg !== '--');
+const rawArgs = stripEnvFileArg(process.argv.slice(2)).filter(
+  (arg) => arg !== '--',
+);
 const commandIndex = rawArgs.findIndex((arg) => !arg.startsWith('--'));
 const command = commandIndex === -1 ? undefined : rawArgs[commandIndex];
-const rest = commandIndex === -1 ? rawArgs : rawArgs.filter((_, index) => index !== commandIndex);
+const rest =
+  commandIndex === -1
+    ? rawArgs
+    : rawArgs.filter((_, index) => index !== commandIndex);
 
 type Flags = Record<string, string | boolean>;
 
@@ -150,12 +169,17 @@ Global Options:
   --quiet                       Suppress non-essential CLI output
   --help                        Show this help message
 
+View Options:
+  --json                        Output as JSON instead of formatted table
+  --with-profiles               Fetch and analyze profile data (for pds.users report)
+
 Examples:
   wclient describe-repo alice.wsocial.network
   wclient get-profile did:plc:alice
   wclient list-records --repo alice.wsocial.network --collection app.bsky.feed.post --limit 10
   wclient list-repos
   wclient view pds.users
+  wclient view pds.users --with-profiles
   wclient view me.haters --did did:plc:example
   wclient view pds.users --quiet
   wclient view pds.users --json
@@ -169,17 +193,20 @@ async function main(): Promise<void> {
   }
 
   const { flags, positional } = parseArgs(rest);
-  const baseUrl = typeof flags['base-url'] === 'string' ? flags['base-url'] : process.env.W_SERVER;
+  const baseUrl =
+    typeof flags['base-url'] === 'string'
+      ? flags['base-url']
+      : process.env.W_SERVER;
 
   async function authenticateFromEnvOrExit(
-    requireCredentials: boolean
+    requireCredentials: boolean,
   ): Promise<{ client: WClient; session: Session | null }> {
     const identifier = process.env.W_USERNAME;
     const password = process.env.W_PASSWORD;
 
     if ((!identifier || !password) && requireCredentials) {
       console.error(
-        'Error: authentication requires W_USERNAME and W_PASSWORD to be set in the environment or .env file.'
+        'Error: authentication requires W_USERNAME and W_PASSWORD to be set in the environment or .env file.',
       );
       process.exit(1);
     }
@@ -191,13 +218,16 @@ async function main(): Promise<void> {
       };
     }
 
-    const authStore = createFileAuthSessionStore(join(process.cwd(), '.wclient-auth-session.json'));
+    const authStore = createFileAuthSessionStore(
+      join(process.cwd(), '.wclient-auth-session.json'),
+    );
     const authenticatedClient = new WClient({
       ...(baseUrl ? { baseUrl } : {}),
       authStore,
     });
     const authenticatedSession =
-      authenticatedClient.getSession() ?? (await authenticatedClient.login({ identifier, password }));
+      authenticatedClient.getSession() ??
+      (await authenticatedClient.login({ identifier, password }));
 
     return {
       client: authenticatedClient,
@@ -222,9 +252,14 @@ async function main(): Promise<void> {
 
   switch (command) {
     case 'describe-repo': {
-      const repo = positional[0] ?? (typeof flags['repo'] === 'string' ? flags['repo'] : undefined) ?? session?.did;
+      const repo =
+        positional[0] ??
+        (typeof flags['repo'] === 'string' ? flags['repo'] : undefined) ??
+        session?.did;
       if (!repo) {
-        console.error('Error: <repo> argument is required (or use --auth to use the authenticated DID).');
+        console.error(
+          'Error: <repo> argument is required (or use --auth to use the authenticated DID).',
+        );
         console.error('Usage: wclient describe-repo [<repo>] [--auth]');
         process.exit(1);
       }
@@ -242,9 +277,14 @@ async function main(): Promise<void> {
         }
       }
 
-      const actor = positional[0] ?? (typeof flags['actor'] === 'string' ? flags['actor'] : undefined) ?? session?.did;
+      const actor =
+        positional[0] ??
+        (typeof flags['actor'] === 'string' ? flags['actor'] : undefined) ??
+        session?.did;
       if (!actor) {
-        console.error('Error: <actor> argument is required (or use --auth to use the authenticated DID).');
+        console.error(
+          'Error: <actor> argument is required (or use --auth to use the authenticated DID).',
+        );
         console.error('Usage: wclient get-profile <actor> [--auth]');
         process.exit(1);
       }
@@ -255,19 +295,26 @@ async function main(): Promise<void> {
     }
 
     case 'list-records': {
-      const repo = (typeof flags['repo'] === 'string' ? flags['repo'] : undefined) ?? session?.did;
-      const collection = typeof flags['collection'] === 'string' ? flags['collection'] : undefined;
+      const repo =
+        (typeof flags['repo'] === 'string' ? flags['repo'] : undefined) ??
+        session?.did;
+      const collection =
+        typeof flags['collection'] === 'string'
+          ? flags['collection']
+          : undefined;
       if (!repo || !collection) {
         console.error(
-          'Error: --collection is required; --repo is required unless using --auth with an authenticated session.'
+          'Error: --collection is required; --repo is required unless using --auth with an authenticated session.',
         );
         console.error(
-          'Usage: wclient list-records [--repo <repo>] --collection <nsid> [--limit N] [--cursor X] [--reverse] [--auth]'
+          'Usage: wclient list-records [--repo <repo>] --collection <nsid> [--limit N] [--cursor X] [--reverse] [--auth]',
         );
         process.exit(1);
       }
-      const limit = typeof flags['limit'] === 'string' ? Number(flags['limit']) : undefined;
-      const cursor = typeof flags['cursor'] === 'string' ? flags['cursor'] : undefined;
+      const limit =
+        typeof flags['limit'] === 'string' ? Number(flags['limit']) : undefined;
+      const cursor =
+        typeof flags['cursor'] === 'string' ? flags['cursor'] : undefined;
       const result = await client.repo.listRecords({
         repo,
         collection,
@@ -286,13 +333,17 @@ async function main(): Promise<void> {
     }
 
     case 'view': {
-      const report = positional[0] ?? (typeof flags['report'] === 'string' ? flags['report'] : undefined);
+      const report =
+        positional[0] ??
+        (typeof flags['report'] === 'string' ? flags['report'] : undefined);
       const wantsJson = flags['json'] === true;
       const quiet = flags['quiet'] === true;
 
       if (!report) {
         console.error('Error: <report> argument is required.');
-        console.error('Usage: wclient view <report> [did] [--did <did>] [--json] [--quiet] [--auth]');
+        console.error(
+          'Usage: wclient view <report> [did] [--did <did>] [--json] [--quiet] [--auth]',
+        );
         console.error('Available reports: pds.users, me.haters');
         process.exit(1);
       }
@@ -300,7 +351,9 @@ async function main(): Promise<void> {
       switch (report) {
         case 'pds.users': {
           if (wantsJson) {
-            const result = await getPdsUsersReport(client);
+            const result = await getPdsUsersReport(client, {
+              withProfiles: flags['with-profiles'] === true,
+            });
             console.log(JSON.stringify(result, null, 2));
           } else {
             if (process.stderr.isTTY && !quiet) {
@@ -308,11 +361,18 @@ async function main(): Promise<void> {
             }
 
             const result = await getPdsUsersReport(client, {
-              onProgress: ({ pagesFetched, usersSoFar }) => {
+              withProfiles: flags['with-profiles'] === true,
+              onProgress: ({ pagesFetched, usersSoFar, profilesFetched }) => {
                 if (!process.stderr.isTTY || quiet) return;
-                process.stderr.write(
-                  `Loading users... pages: ${pagesFetched}, users: ${usersSoFar.toLocaleString('en-US')}\r`
-                );
+                if (profilesFetched !== undefined) {
+                  process.stderr.write(
+                    `Loading users... pages: ${pagesFetched}, profiles: ${profilesFetched.toLocaleString('en-US')}\r`,
+                  );
+                } else {
+                  process.stderr.write(
+                    `Loading users... pages: ${pagesFetched}, users: ${usersSoFar.toLocaleString('en-US')}\r`,
+                  );
+                }
               },
             });
 
@@ -335,17 +395,26 @@ async function main(): Promise<void> {
             }
           }
 
-          let did = (typeof flags['did'] === 'string' ? flags['did'] : undefined) ?? positional[1] ?? session?.did;
+          let did =
+            (typeof flags['did'] === 'string' ? flags['did'] : undefined) ??
+            positional[1] ??
+            session?.did;
 
           if (!did) {
             console.error(
-              'Error: me.haters requires a DID. Provide --did <did>, a positional DID, or set W_USERNAME and W_PASSWORD in .env for automatic authentication.'
+              'Error: me.haters requires a DID. Provide --did <did>, a positional DID, or set W_USERNAME and W_PASSWORD in .env for automatic authentication.',
             );
             process.exit(1);
           }
 
-          const limit = typeof flags['limit'] === 'string' ? Number(flags['limit']) : undefined;
-          if (limit !== undefined && (!Number.isInteger(limit) || limit < 1 || limit > 100)) {
+          const limit =
+            typeof flags['limit'] === 'string'
+              ? Number(flags['limit'])
+              : undefined;
+          if (
+            limit !== undefined &&
+            (!Number.isInteger(limit) || limit < 1 || limit > 100)
+          ) {
             console.error('Error: --limit must be an integer in range 1..100.');
             process.exit(1);
           }
@@ -370,7 +439,7 @@ async function main(): Promise<void> {
               onProgress: ({ pagesFetched, recordsSoFar, blockersSoFar }) => {
                 if (!process.stderr.isTTY || quiet) return;
                 process.stderr.write(
-                  `Loading blockers... pages: ${pagesFetched}, records: ${recordsSoFar.toLocaleString('en-US')}, unique users: ${blockersSoFar.toLocaleString('en-US')}\r`
+                  `Loading blockers... pages: ${pagesFetched}, records: ${recordsSoFar.toLocaleString('en-US')}, unique users: ${blockersSoFar.toLocaleString('en-US')}\r`,
                 );
               },
             });

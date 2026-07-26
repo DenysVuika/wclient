@@ -1,4 +1,4 @@
-export { getProfile, type ActorProfile, type ActorService } from './actor';
+export { getProfile, type ActorProfile, type ActorService, type WActorProfile } from './actor';
 export {
   describeRepo,
   listRecords,

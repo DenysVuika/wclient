@@ -170,7 +170,8 @@ Render a custom report.
 
 Currently available reports:
 
-- `pds.users`: shows active users, inactive users, and total users across all pages from `com.atproto.sync.listRepos`
+- `pds.users`: shows active users, inactive users, and total users across all pages from `com.atproto.sync.listRepos`.
+  Use `--with-profiles` to fetch profile metadata and include additional metrics (human/bot users, verification status).
 - `me.haters`: shows users (DIDs) that have blocked a subject DID using `blue.microcosm.links.getBacklinks`
   and resolves each blocker profile via `app.bsky.actor.getProfile`
 
@@ -178,6 +179,10 @@ Currently available reports:
 npx wclient view pds.users
 npx wclient view pds.users --quiet
 npx wclient view pds.users --json
+
+# fetch profile data to include user type and verification metrics
+npx wclient view pds.users --with-profiles
+npx wclient view pds.users --with-profiles --json
 
 # public API usage with an explicit DID (no auth required)
 npx wclient view me.haters --did did:plc:example
@@ -205,6 +210,23 @@ PDS Users: 25 July 2026
 +----------------+-------+
 ```
 
+Table output example with `--with-profiles`:
+
+```text
+PDS Users: 26 July 2026
++-------------------+-------+
+| Metric            | Value |
++-------------------+-------+
+| Active users      |   987 |
+| Inactive users    |   247 |
+| Total users       | 1,234 |
+| Human users       |   956 |
+| Bot users         |    31 |
+| Verified by WID   |   145 |
+| Verified by Admin |     8 |
++-------------------+-------+
+```
+
 JSON output example:
 
 ```json
@@ -212,6 +234,20 @@ JSON output example:
   "users": 1234,
   "activeUsers": 987,
   "inactiveUsers": 247
+}
+```
+
+JSON output example with `--with-profiles`:
+
+```json
+{
+  "users": 1234,
+  "activeUsers": 987,
+  "inactiveUsers": 247,
+  "humanUsers": 956,
+  "botUsers": 31,
+  "verifiedByWid": 145,
+  "verifiedByAdmin": 8
 }
 ```
 
@@ -237,6 +273,17 @@ JSON output example:
 }
 ```
 
+`pds.users` notes:
+
+- By default, only basic metrics are shown (active, inactive, total).
+- Use `--with-profiles` to fetch profile metadata and include additional metrics:
+  - `humanUsers`: accounts with `wsocialAccountType: 'human'`
+  - `botUsers`: accounts with `wsocialAccountType: 'bot'`
+  - `verifiedByWid`: accounts with `wsocialVerified: 'wid'`
+  - `verifiedByAdmin`: accounts with `wsocialVerified: 'admin'`
+- Profile-based metrics are only included in output if profile data was successfully fetched.
+- If a PDS doesn't support W social attributes, those metrics will be omitted without errors.
+
 `me.haters` notes:
 
 - The subject DID is resolved in this order: `--did`, positional DID (`view me.haters <did>`), authenticated session DID.
@@ -252,6 +299,8 @@ JSON output example:
 | `--base-url <url>`  | Override the default PDS URL                                                    |
 | `--auth`            | Authenticate using `W_USERNAME` and `W_PASSWORD` and reuse cached session DID   |
 | `--quiet`           | Suppress non-essential CLI output (for example loading progress in `view` mode) |
+| `--json`            | Output as JSON instead of formatted table (for `view` reports)                  |
+| `--with-profiles`   | Fetch profile data for additional metrics (for `view pds.users` report)         |
 | `--help`            | Show help                                                                       |
 
 ```bash

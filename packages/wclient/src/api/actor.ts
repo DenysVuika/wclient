@@ -25,6 +25,14 @@ export type ActorProfile = {
   [key: string]: unknown;
 };
 
+/**
+ * Extended actor profile with W social attributes.
+ */
+export type WActorProfile = ActorProfile & {
+  wsocialAccountType?: 'human' | 'bot';
+  wsocialVerified?: 'wid' | 'admin';
+};
+
 export type ActorService = {
   /**
    * Get detailed profile view of an actor.
