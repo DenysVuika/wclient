@@ -3,6 +3,10 @@ import { existsSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { createFileAuthSessionStore, type Session } from './auth/index.js';
 import {
+  getMeHatersReport,
+  renderMeHatersReportTable,
+} from './view/me.haters.js';
+import {
   getPdsUsersReport,
   renderPdsUsersReportTable,
 } from './view/pds.users.js';
@@ -169,8 +173,10 @@ Examples:
   wclient list-records --repo alice.wsocial.network --collection app.bsky.feed.post --limit 10
   wclient list-repos
   wclient view pds.users
+  wclient view me.haters --did did:plc:example
   wclient view pds.users --quiet
-  wclient view pds.users --json`);
+  wclient view pds.users --json
+  wclient view me.haters --auth --limit 100 --reverse`);
 }
 
 async function main(): Promise<void> {
@@ -185,24 +191,50 @@ async function main(): Promise<void> {
       ? flags['base-url']
       : process.env.W_SERVER;
 
+  async function authenticateFromEnvOrExit(
+    requireCredentials: boolean,
+  ): Promise<{ client: WClient; session: Session | null }> {
+    const identifier = process.env.W_USERNAME;
+    const password = process.env.W_PASSWORD;
+
+    if ((!identifier || !password) && requireCredentials) {
+      console.error(
+        'Error: authentication requires W_USERNAME and W_PASSWORD to be set in the environment or .env file.',
+      );
+      process.exit(1);
+    }
+
+    if (!identifier || !password) {
+      return {
+        client: new WClient(baseUrl ? { baseUrl } : {}),
+        session: null,
+      };
+    }
+
+    const authStore = createFileAuthSessionStore(
+      join(process.cwd(), '.wclient-auth-session.json'),
+    );
+    const authenticatedClient = new WClient({
+      ...(baseUrl ? { baseUrl } : {}),
+      authStore,
+    });
+    const authenticatedSession =
+      authenticatedClient.getSession() ??
+      (await authenticatedClient.login({ identifier, password }));
+
+    return {
+      client: authenticatedClient,
+      session: authenticatedSession,
+    };
+  }
+
   let session: Session | null = null;
   let client: WClient;
 
   if (flags['auth'] === true) {
-    const identifier = process.env.W_USERNAME;
-    const password = process.env.W_PASSWORD;
-    if (!identifier || !password) {
-      console.error(
-        'Error: --auth requires W_USERNAME and W_PASSWORD to be set in the environment or .env file.',
-      );
-      process.exit(1);
-    }
-    const authStore = createFileAuthSessionStore(
-      join(process.cwd(), '.wclient-auth-session.json'),
-    );
-    client = new WClient({ ...(baseUrl ? { baseUrl } : {}), authStore });
-    session =
-      client.getSession() ?? (await client.login({ identifier, password }));
+    const authResult = await authenticateFromEnvOrExit(true);
+    client = authResult.client;
+    session = authResult.session;
     if (!session) {
       console.error('Authentication failed.');
       process.exit(1);
@@ -277,9 +309,9 @@ async function main(): Promise<void> {
       if (!report) {
         console.error('Error: <report> argument is required.');
         console.error(
-          'Usage: wclient view <report> [--json] [--quiet] [--auth]',
+          'Usage: wclient view <report> [did] [--did <did>] [--json] [--quiet] [--auth]',
         );
-        console.error('Available reports: pds.users');
+        console.error('Available reports: pds.users, me.haters');
         process.exit(1);
       }
 
@@ -312,9 +344,71 @@ async function main(): Promise<void> {
           break;
         }
 
+        case 'me.haters': {
+          let did =
+            (typeof flags['did'] === 'string' ? flags['did'] : undefined) ??
+            positional[1] ??
+            session?.did;
+
+          if (!did) {
+            const authResult = await authenticateFromEnvOrExit(false);
+            client = authResult.client;
+            session = authResult.session;
+            did = session?.did;
+          }
+
+          if (!did) {
+            console.error(
+              'Error: me.haters requires a DID. Provide --did <did>, a positional DID, or set W_USERNAME and W_PASSWORD in .env for automatic authentication.',
+            );
+            process.exit(1);
+          }
+
+          const limit =
+            typeof flags['limit'] === 'string' ? Number(flags['limit']) : undefined;
+          if (limit !== undefined && (!Number.isInteger(limit) || limit < 1 || limit > 100)) {
+            console.error('Error: --limit must be an integer in range 1..100.');
+            process.exit(1);
+          }
+
+          const reverse = flags['reverse'] === true;
+          const reportOptions = {
+            did,
+            reverse,
+            ...(limit !== undefined ? { limit } : {}),
+          };
+
+          if (wantsJson) {
+            const result = await getMeHatersReport(client, reportOptions);
+            console.log(JSON.stringify(result, null, 2));
+          } else {
+            if (process.stderr.isTTY && !quiet) {
+              process.stderr.write('Loading blockers...\r');
+            }
+
+            const result = await getMeHatersReport(client, {
+              ...reportOptions,
+              onProgress: ({ pagesFetched, recordsSoFar, blockersSoFar }) => {
+                if (!process.stderr.isTTY || quiet) return;
+                process.stderr.write(
+                  `Loading blockers... pages: ${pagesFetched}, records: ${recordsSoFar.toLocaleString('en-US')}, unique users: ${blockersSoFar.toLocaleString('en-US')}\r`,
+                );
+              },
+            });
+
+            if (process.stderr.isTTY && !quiet) {
+              process.stderr.write('\n');
+            }
+
+            const table = renderMeHatersReportTable(result);
+            console.log(table);
+          }
+          break;
+        }
+
         default: {
           console.error(`Unknown report: ${report}`);
-          console.error('Available reports: pds.users');
+          console.error('Available reports: pds.users, me.haters');
           process.exit(1);
         }
       }

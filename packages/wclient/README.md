@@ -148,11 +148,24 @@ Render a custom report.
 Currently available reports:
 
 - `pds.users`: shows active users, inactive users, and total users across all pages from `com.atproto.sync.listRepos`
+- `me.haters`: shows users (DIDs) that have blocked a subject DID using `blue.microcosm.links.getBacklinks`
 
 ```bash
 npx wclient view pds.users
 npx wclient view pds.users --quiet
 npx wclient view pds.users --json
+
+# public API usage with an explicit DID (no auth required)
+npx wclient view me.haters --did did:plc:example
+npx wclient view me.haters did:plc:example
+npx wclient view me.haters --did did:plc:example --limit 100 --reverse
+npx wclient view me.haters --did did:plc:example --json
+
+# authenticated flow can infer DID from session
+npx wclient --env-file .env --auth view me.haters
+
+# if DID is omitted, CLI also attempts auth from .env automatically
+npx wclient --env-file .env view me.haters
 ```
 
 Table output example:
@@ -178,12 +191,34 @@ JSON output example:
 }
 ```
 
+`me.haters` JSON output example:
+
+```json
+{
+  "subjectDid": "did:plc:example",
+  "total": 9,
+  "blockers": [
+    "did:plc:fakeblocker0000000000001",
+    "did:plc:fakeblocker0000000000002"
+  ],
+  "pagesFetched": 1
+}
+```
+
+`me.haters` notes:
+
+- The subject DID is resolved in this order: `--did`, positional DID (`view me.haters <did>`), authenticated session DID.
+- Optional flags: `--limit` (1..100), `--reverse`.
+- The endpoint is public, so auth is optional when a DID is provided.
+- If DID is omitted, the CLI attempts to authenticate using `W_USERNAME` and `W_PASSWORD` from environment/.env and then uses the session DID.
+
 ### Global options
 
 | Flag                | Description                                                                     |
 | ------------------- | ------------------------------------------------------------------------------- |
 | `--env-file <path>` | Load environment variables from a specific file                                 |
 | `--base-url <url>`  | Override the default PDS URL                                                    |
+| `--auth`            | Authenticate using `W_USERNAME` and `W_PASSWORD` and reuse cached session DID  |
 | `--quiet`           | Suppress non-essential CLI output (for example loading progress in `view` mode) |
 | `--help`            | Show help                                                                       |
 

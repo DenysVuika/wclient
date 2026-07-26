@@ -40,6 +40,13 @@ pnpm --filter wclient cli describe-repo alice.wsocial.network
 # with the -- separator (also works — pnpm forwards it, the CLI strips it)
 pnpm --filter wclient cli -- list-repos
 pnpm --filter wclient cli -- describe-repo alice.wsocial.network
+
+# me.haters via public API using explicit DID (no auth required)
+pnpm --filter wclient cli -- view me.haters --did did:plc:example
+pnpm --filter wclient cli -- view me.haters did:plc:example
+
+# me.haters with DID inferred via automatic auth from .env credentials
+pnpm --filter wclient cli -- --env-file .env view me.haters
 ```
 
 ### Authenticated commands
@@ -71,6 +78,9 @@ pnpm --filter wclient cli -- --auth describe-repo other.user.network
 
 # pick a specific env file
 pnpm --filter wclient cli -- --env-file .env.staging --auth describe-repo
+
+# authenticated me.haters (DID inferred from session)
+pnpm --filter wclient cli -- --env-file .env --auth view me.haters
 ```
 
 The playground shares the same session file, so logging in via either tool will reuse the cached session in the other.
