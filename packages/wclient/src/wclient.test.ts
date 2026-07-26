@@ -7,7 +7,7 @@ describe('WClient', () => {
     vi.restoreAllMocks();
   });
 
-  it('logs in and exposes repo helpers through namespaces', async () => {
+  it('logs in and exposes API helpers through namespaces', async () => {
     const session = {
       accessJwt: 'access-token',
       refreshJwt: 'refresh-token',
@@ -25,6 +25,11 @@ describe('WClient', () => {
       collections: ['app.bsky.feed.post'],
       handleIsCorrect: true,
     };
+    const profile = {
+      did: session.did,
+      handle: session.handle,
+      displayName: 'Alice',
+    };
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
@@ -38,6 +43,12 @@ describe('WClient', () => {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(profile), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
       );
     vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
 
@@ -48,10 +59,12 @@ describe('WClient', () => {
       password: 'secret',
     });
     const result = await client.repo.describeRepo(session.did);
+    const actorProfile = await client.actor.getProfile(session.did);
 
     expect(client.getSession()).toEqual(session);
     expect(result).toEqual(repoInfo);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(actorProfile).toEqual(profile);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
   it('uses DEFAULT_PDS_URL when baseUrl is omitted', async () => {

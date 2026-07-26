@@ -1,7 +1,9 @@
 import {
+  getProfile,
   describeRepo,
   listRecords,
   listRepos,
+  type ActorService,
   type ListReposOptions,
   type ListRecordsOptions,
   type RepoService,
@@ -29,6 +31,7 @@ export const DEFAULT_PDS_URL = 'https://pds.wsocial.network';
 export class WClient {
   readonly auth: AuthClient;
   readonly apiClient: ApiClient;
+  readonly actor: ActorService;
   readonly repo: RepoService;
   readonly sync: SyncService;
 
@@ -38,6 +41,9 @@ export class WClient {
 
     this.auth = createAuth(authApiClient, authStore);
     this.apiClient = createApiClient(resolveBaseUrl, this.auth);
+    this.actor = {
+      getProfile: (actor: string) => getProfile(this.apiClient, actor),
+    };
     this.repo = {
       describeRepo: (repo: string) => describeRepo(this.apiClient, repo),
       listRecords: (options: ListRecordsOptions) => listRecords(this.apiClient, options),
