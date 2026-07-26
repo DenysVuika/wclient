@@ -1,7 +1,12 @@
 import type { WClient } from '../wclient.js';
 import { getProfile } from '../api/actor.js';
-import { formatNumber, formatReportDate, renderAsciiTable } from '../utils/table.js';
 import {
+  formatNumber,
+  formatReportDate,
+  renderAsciiTable,
+} from '../utils/table.js';
+import {
+  flushProfileCache,
   getProfileFromCache,
   saveProfileToCache,
 } from './profile-cache.js';
@@ -12,6 +17,7 @@ export type PdsUsersReport = {
   inactiveUsers: number;
   humanUsers?: number;
   botUsers?: number;
+  unverifiedUsers?: number;
   verifiedByWid?: number;
   verifiedByAdmin?: number;
 };
@@ -27,12 +33,16 @@ export type GetPdsUsersReportOptions = {
   withProfiles?: boolean;
 };
 
-export async function getPdsUsersReport(client: WClient, options?: GetPdsUsersReportOptions): Promise<PdsUsersReport> {
+export async function getPdsUsersReport(
+  client: WClient,
+  options?: GetPdsUsersReportOptions,
+): Promise<PdsUsersReport> {
   let cursor: string | undefined;
   let users = 0;
   let activeUsers = 0;
   let humanUsers = 0;
   let botUsers = 0;
+  let unverifiedUsers = 0;
   let verifiedByWid = 0;
   let verifiedByAdmin = 0;
   let pagesFetched = 0;
@@ -40,7 +50,9 @@ export async function getPdsUsersReport(client: WClient, options?: GetPdsUsersRe
   let hasProfileData = false;
 
   do {
-    const response = await client.sync.listRepos(cursor !== undefined ? { cursor } : undefined);
+    const response = await client.sync.listRepos(
+      cursor !== undefined ? { cursor } : undefined,
+    );
     const repos = response.data.repos;
 
     users += repos.length;
@@ -48,17 +60,18 @@ export async function getPdsUsersReport(client: WClient, options?: GetPdsUsersRe
 
     // Fetch profiles if withProfiles is enabled
     if (options?.withProfiles) {
+      pagesFetched += 1;
       for (const repo of repos) {
         try {
           // Try to get from cache first
           let profile = getProfileFromCache(repo.did);
-          
+
           // If not in cache, fetch from API and cache it
           if (!profile) {
             profile = await getProfile(client.apiClient, repo.did);
             saveProfileToCache(repo.did, profile);
           }
-          
+
           hasProfileData = true;
           profilesFetched++;
 
@@ -66,6 +79,8 @@ export async function getPdsUsersReport(client: WClient, options?: GetPdsUsersRe
             humanUsers++;
           } else if (profile.wsocialAccountType === 'bot') {
             botUsers++;
+          } else if (profile.wsocialAccountType === 'unverified') {
+            unverifiedUsers++;
           }
 
           if (profile.wsocialVerified === 'wid') {
@@ -75,13 +90,11 @@ export async function getPdsUsersReport(client: WClient, options?: GetPdsUsersRe
           }
 
           // Report progress after each profile fetch
-          options?.onProgress?.(
-            {
-              pagesFetched,
-              usersSoFar: users,
-              profilesFetched,
-            },
-          );
+          options?.onProgress?.({
+            pagesFetched,
+            usersSoFar: users,
+            profilesFetched,
+          });
         } catch {
           // Skip profiles that fail to load
         }
@@ -97,6 +110,9 @@ export async function getPdsUsersReport(client: WClient, options?: GetPdsUsersRe
     cursor = response.data.cursor;
   } while (cursor !== undefined);
 
+  // Persist any newly fetched profiles to disk in one write
+  flushProfileCache();
+
   const report: PdsUsersReport = {
     users,
     activeUsers,
@@ -107,6 +123,7 @@ export async function getPdsUsersReport(client: WClient, options?: GetPdsUsersRe
   if (hasProfileData) {
     report.humanUsers = humanUsers;
     report.botUsers = botUsers;
+    report.unverifiedUsers = unverifiedUsers;
     report.verifiedByWid = verifiedByWid;
     report.verifiedByAdmin = verifiedByAdmin;
   }
@@ -114,7 +131,10 @@ export async function getPdsUsersReport(client: WClient, options?: GetPdsUsersRe
   return report;
 }
 
-export function renderPdsUsersReportTable(report: PdsUsersReport, date: Date = new Date()): string {
+export function renderPdsUsersReportTable(
+  report: PdsUsersReport,
+  date: Date = new Date(),
+): string {
   const rows: string[][] = [
     ['Active users', formatNumber(report.activeUsers)],
     ['Inactive users', formatNumber(report.inactiveUsers)],
@@ -127,6 +147,9 @@ export function renderPdsUsersReportTable(report: PdsUsersReport, date: Date = n
   }
   if (report.botUsers !== undefined) {
     rows.push(['Bot users', formatNumber(report.botUsers)]);
+  }
+  if (report.unverifiedUsers !== undefined) {
+    rows.push(['Unverified users', formatNumber(report.unverifiedUsers)]);
   }
   if (report.verifiedByWid !== undefined) {
     rows.push(['Verified by WID', formatNumber(report.verifiedByWid)]);
@@ -145,7 +168,9 @@ export function renderPdsUsersReportTable(report: PdsUsersReport, date: Date = n
   ].join('\n');
 }
 
-export async function buildPdsUsersReportTable(client: WClient): Promise<string> {
+export async function buildPdsUsersReportTable(
+  client: WClient,
+): Promise<string> {
   const report = await getPdsUsersReport(client);
   return renderPdsUsersReportTable(report);
 }

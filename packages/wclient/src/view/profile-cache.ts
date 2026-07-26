@@ -16,59 +16,67 @@ export type ProfileCache = {
 const CACHE_VERSION = 1;
 const CACHE_FILE = '.wclient-profile-cache.json';
 
+// In-memory cache — loaded once from disk on first access
+let memoryCache: ProfileCache | null = null;
+let dirty = false;
+
 function getCachePath(): string {
   return join(process.cwd(), CACHE_FILE);
 }
 
-function loadCache(): ProfileCache {
-  const cachePath = getCachePath();
-  if (!existsSync(cachePath)) {
-    return { version: CACHE_VERSION, profiles: {} };
+function getCache(): ProfileCache {
+  if (memoryCache !== null) {
+    return memoryCache;
   }
 
-  try {
-    const content = readFileSync(cachePath, 'utf-8');
-    const cache = JSON.parse(content) as ProfileCache;
-    if (cache.version === CACHE_VERSION) {
-      return cache;
+  const cachePath = getCachePath();
+  if (existsSync(cachePath)) {
+    try {
+      const content = readFileSync(cachePath, 'utf-8');
+      const cache = JSON.parse(content) as ProfileCache;
+      if (cache.version === CACHE_VERSION) {
+        memoryCache = cache;
+        return memoryCache;
+      }
+    } catch {
+      // If cache is corrupted, start fresh
     }
-  } catch {
-    // If cache is corrupted, start fresh
   }
 
-  return { version: CACHE_VERSION, profiles: {} };
-}
-
-function saveCache(cache: ProfileCache): void {
-  const cachePath = getCachePath();
-  writeFileSync(cachePath, JSON.stringify(cache, null, 2), 'utf-8');
+  memoryCache = { version: CACHE_VERSION, profiles: {} };
+  return memoryCache;
 }
 
 export function getProfileFromCache(did: string): ActorProfile | null {
-  const cache = loadCache();
+  const cache = getCache();
   const entry = cache.profiles[did];
   return entry ? entry.profile : null;
 }
 
 export function saveProfileToCache(did: string, profile: ActorProfile): void {
-  const cache = loadCache();
+  const cache = getCache();
   cache.profiles[did] = {
     did,
     profile,
     cachedAt: Date.now(),
   };
-  saveCache(cache);
+  dirty = true;
+}
+
+export function flushProfileCache(): void {
+  if (!dirty || memoryCache === null) return;
+  const cachePath = getCachePath();
+  writeFileSync(cachePath, JSON.stringify(memoryCache, null, 2), 'utf-8');
+  dirty = false;
 }
 
 export function clearProfileCache(): void {
+  memoryCache = { version: CACHE_VERSION, profiles: {} };
+  dirty = false;
   const cachePath = getCachePath();
-  if (existsSync(cachePath)) {
-    const cache: ProfileCache = { version: CACHE_VERSION, profiles: {} };
-    saveCache(cache);
-  }
+  writeFileSync(cachePath, JSON.stringify(memoryCache, null, 2), 'utf-8');
 }
 
 export function getCacheSize(): number {
-  const cache = loadCache();
-  return Object.keys(cache.profiles).length;
+  return Object.keys(getCache().profiles).length;
 }

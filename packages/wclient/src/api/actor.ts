@@ -29,8 +29,8 @@ export type ActorProfile = {
  * Extended actor profile with W social attributes.
  */
 export type WActorProfile = ActorProfile & {
-  wsocialAccountType?: 'human' | 'bot';
-  wsocialVerified?: 'wid' | 'admin';
+  wsocialAccountType?: 'human' | 'bot' | 'unverified';
+  wsocialVerified?: 'wid' | 'admin' | null;
 };
 
 export type ActorService = {
@@ -50,7 +50,10 @@ export type ActorService = {
  * Query parameters:
  * - actor (string, format: at-identifier, required): Handle or DID of account to fetch profile of.
  */
-export async function getProfile(api: ApiClient, actor: string): Promise<ActorProfile> {
+export async function getProfile(
+  api: ApiClient,
+  actor: string,
+): Promise<ActorProfile> {
   const response = await api.request({
     path: 'app.bsky.actor.getProfile',
     query: {
@@ -59,7 +62,9 @@ export async function getProfile(api: ApiClient, actor: string): Promise<ActorPr
   });
 
   if (!response.ok) {
-    throw new Error(`Request failed: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `Request failed: ${response.status} ${response.statusText}`,
+    );
   }
 
   return (await response.json()) as ActorProfile;
