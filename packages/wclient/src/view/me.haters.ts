@@ -1,9 +1,5 @@
 import type { WClient } from '../wclient.js';
-import {
-  formatNumber,
-  formatReportDate,
-  renderAsciiTable,
-} from '../utils/table.js';
+import { formatNumber, formatReportDate, renderAsciiTable } from '../utils/table.js';
 
 const MICROCOSM_BASE_URL = 'https://constellation.microcosm.blue';
 const GET_BACKLINKS_PATH = '/xrpc/blue.microcosm.links.getBacklinks';

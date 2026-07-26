@@ -36,7 +36,7 @@ export function renderAsciiTable(options: RenderAsciiTableOptions): string {
 
   const columnCount = headers.length;
   const widths = headers.map((header, index) =>
-    Math.max(header.length, ...rows.map((entry) => (entry[index] ?? '').length)),
+    Math.max(header.length, ...rows.map((entry) => (entry[index] ?? '').length))
   );
   const line = divider(widths);
 

@@ -20,7 +20,7 @@ describe('table utilities', () => {
         '| A           |     1 |',
         '| Long metric |    22 |',
         '+-------------+-------+',
-      ].join('\n'),
+      ].join('\n')
     );
   });
 
@@ -38,10 +38,8 @@ describe('table utilities', () => {
       renderAsciiTable({
         headers: ['A', 'B'],
         rows: [['only-a']],
-      }),
-    ).toThrow(
-      'Invalid table row: row column count does not match header column count.',
-    );
+      })
+    ).toThrow('Invalid table row: row column count does not match header column count.');
   });
 
   it('formats numbers in en-US style', () => {
