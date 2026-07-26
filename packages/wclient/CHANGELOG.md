@@ -1,5 +1,12 @@
 # wclient
 
+## 0.1.9
+
+### Patch Changes
+
+- 5e011de: Add me.haters report with public DID support and auth fallback
+- b770041: imporoved format of the pds.users report
+
 ## 0.1.8
 
 ### Patch Changes
