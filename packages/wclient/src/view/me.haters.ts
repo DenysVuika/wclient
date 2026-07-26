@@ -1,4 +1,9 @@
 import type { WClient } from '../wclient.js';
+import {
+  formatNumber,
+  formatReportDate,
+  renderAsciiTable,
+} from '../utils/table.js';
 
 const MICROCOSM_BASE_URL = 'https://constellation.microcosm.blue';
 const GET_BACKLINKS_PATH = '/xrpc/blue.microcosm.links.getBacklinks';
@@ -44,34 +49,6 @@ function assertLimit(limit: number | undefined): void {
   if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
     throw new Error('Invalid limit value: expected an integer in range 1..100.');
   }
-}
-
-function formatNumber(value: number): string {
-  return value.toLocaleString('en-US');
-}
-
-function padRight(value: string, width: number): string {
-  return value.padEnd(width, ' ');
-}
-
-function padLeft(value: string, width: number): string {
-  return value.padStart(width, ' ');
-}
-
-function divider(indexWidth: number, didWidth: number): string {
-  return `+${'-'.repeat(indexWidth + 2)}+${'-'.repeat(didWidth + 2)}+`;
-}
-
-function tableRow(index: string, did: string, indexWidth: number, didWidth: number): string {
-  return `| ${padLeft(index, indexWidth)} | ${padRight(did, didWidth)} |`;
-}
-
-function formatReportDate(date: Date): string {
-  return new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(date);
 }
 
 export async function getMeHatersReport(client: WClient, options?: GetMeHatersReportOptions): Promise<MeHatersReport> {
@@ -142,22 +119,18 @@ export async function getMeHatersReport(client: WClient, options?: GetMeHatersRe
 }
 
 export function renderMeHatersReportTable(report: MeHatersReport, date: Date = new Date()): string {
-  const rows: Array<[string, string]> =
+  const rows: string[][] =
     report.blockers.length > 0 ? report.blockers.map((did, index) => [String(index + 1), did]) : [['-', 'None']];
-
-  const indexWidth = Math.max('#'.length, ...rows.map(([index]) => index.length));
-  const didWidth = Math.max('DID'.length, ...rows.map(([, did]) => did.length));
-  const line = divider(indexWidth, didWidth);
 
   const output = [
     `Me Haters: ${formatReportDate(date)}`,
     `Subject DID: ${report.subjectDid}`,
     `Total blockers: ${formatNumber(report.blockers.length)} (records: ${formatNumber(report.total)})`,
-    line,
-    tableRow('#', 'DID', indexWidth, didWidth),
-    line,
-    ...rows.map(([index, did]) => tableRow(index, did, indexWidth, didWidth)),
-    line,
+    renderAsciiTable({
+      headers: ['#', 'DID'],
+      rows,
+      alignments: ['right', 'left'],
+    }),
   ];
 
   return output.join('\n');

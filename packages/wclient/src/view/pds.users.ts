@@ -1,4 +1,9 @@
 import type { WClient } from '../wclient.js';
+import {
+  formatNumber,
+  formatReportDate,
+  renderAsciiTable,
+} from '../utils/table.js';
 
 export type PdsUsersReport = {
   users: number;
@@ -43,55 +48,21 @@ export async function getPdsUsersReport(client: WClient, options?: GetPdsUsersRe
   };
 }
 
-function formatNumber(value: number): string {
-  return value.toLocaleString('en-US');
-}
-
-function padRight(value: string, width: number): string {
-  return value.padEnd(width, ' ');
-}
-
-function padLeft(value: string, width: number): string {
-  return value.padStart(width, ' ');
-}
-
-function divider(metricWidth: number, valueWidth: number): string {
-  return `+${'-'.repeat(metricWidth + 2)}+${'-'.repeat(valueWidth + 2)}+`;
-}
-
-function tableRow(metric: string, value: string, metricWidth: number, valueWidth: number): string {
-  return `| ${padRight(metric, metricWidth)} | ${padLeft(value, valueWidth)} |`;
-}
-
-function formatReportDate(date: Date): string {
-  return new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(date);
-}
-
 export function renderPdsUsersReportTable(report: PdsUsersReport, date: Date = new Date()): string {
-  const rows: Array<[string, string]> = [
+  const rows: string[][] = [
     ['Active users', formatNumber(report.activeUsers)],
     ['Inactive users', formatNumber(report.inactiveUsers)],
     ['Total users', formatNumber(report.users)],
   ];
 
-  const metricWidth = Math.max('Metric'.length, ...rows.map(([metric]) => metric.length));
-  const valueWidth = Math.max('Value'.length, ...rows.map(([, value]) => value.length));
-  const line = divider(metricWidth, valueWidth);
-
-  const output = [
+  return [
     `PDS Users: ${formatReportDate(date)}`,
-    line,
-    tableRow('Metric', 'Value', metricWidth, valueWidth),
-    line,
-    ...rows.map(([metric, value]) => tableRow(metric, value, metricWidth, valueWidth)),
-    line,
-  ];
-
-  return output.join('\n');
+    renderAsciiTable({
+      headers: ['Metric', 'Value'],
+      rows,
+      alignments: ['left', 'right'],
+    }),
+  ].join('\n');
 }
 
 export async function buildPdsUsersReportTable(client: WClient): Promise<string> {
