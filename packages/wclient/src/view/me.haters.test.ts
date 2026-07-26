@@ -74,6 +74,17 @@ describe('me.haters report', () => {
     vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
 
     const client = new WClient();
+    const getProfile = vi.fn().mockImplementation(async (actor: string) => {
+      if (actor === 'did:plc:first') {
+        return { did: actor, handle: 'first.test', displayName: 'First User' };
+      }
+      if (actor === 'did:plc:second') {
+        return { did: actor, handle: 'second.test', displayName: 'Second User' };
+      }
+      return { did: actor, handle: 'third.test', displayName: 'Third User' };
+    });
+    client.actor.getProfile = getProfile;
+
     const report = await getMeHatersReport(client, {
       did: 'did:plc:me',
       limit: 100,
@@ -83,9 +94,26 @@ describe('me.haters report', () => {
     expect(report).toEqual({
       subjectDid: 'did:plc:me',
       total: 3,
-      blockers: ['did:plc:first', 'did:plc:second', 'did:plc:third'],
+      blockers: [
+        {
+          did: 'did:plc:first',
+          handle: 'first.test',
+          displayName: 'First User',
+        },
+        {
+          did: 'did:plc:second',
+          handle: 'second.test',
+          displayName: 'Second User',
+        },
+        {
+          did: 'did:plc:third',
+          handle: 'third.test',
+          displayName: 'Third User',
+        },
+      ],
       pagesFetched: 2,
     });
+    expect(getProfile).toHaveBeenCalledTimes(3);
     expect(fetchMock).toHaveBeenCalledTimes(2);
 
     const [url1Input] = fetchMock.mock.calls[0] as [RequestInfo | URL, RequestInit];
@@ -135,6 +163,11 @@ describe('me.haters report', () => {
 
     const client = new WClient();
     vi.spyOn(client, 'getSession').mockReturnValue(session);
+    client.actor.getProfile = vi.fn().mockResolvedValue({
+      did: 'did:plc:hater',
+      handle: 'hater.test',
+      displayName: 'Hater',
+    });
 
     const report = await getMeHatersReport(client);
 
@@ -190,6 +223,11 @@ describe('me.haters report', () => {
     vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
 
     const client = new WClient();
+    client.actor.getProfile = vi.fn().mockResolvedValue({
+      did: 'did:plc:any',
+      handle: 'any.test',
+      displayName: 'Any',
+    });
     const progressEvents: Array<{
       pagesFetched: number;
       recordsSoFar: number;
@@ -214,7 +252,10 @@ describe('me.haters report', () => {
       {
         subjectDid: 'did:plc:me',
         total: 2,
-        blockers: ['did:plc:first', 'did:plc:second'],
+        blockers: [
+          { did: 'did:plc:first', handle: 'first.test', displayName: 'First User' },
+          { did: 'did:plc:second', handle: 'second.test', displayName: 'Second User' },
+        ],
         pagesFetched: 1,
       },
       new Date('2026-07-25T00:00:00Z')
@@ -223,7 +264,7 @@ describe('me.haters report', () => {
     expect(output).toContain('Me Haters: 25 July 2026');
     expect(output).toContain('Subject DID: did:plc:me');
     expect(output).toContain('Total blockers: 2 (records: 2)');
-    expect(output).toContain('| 1 | did:plc:first  |');
-    expect(output).toContain('| 2 | did:plc:second |');
+    expect(output).toContain('| 1 | did:plc:first  | First User (first.test)   |');
+    expect(output).toContain('| 2 | did:plc:second | Second User (second.test) |');
   });
 });

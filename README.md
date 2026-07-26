@@ -40,6 +40,7 @@ pnpm --filter wclient cli describe-repo alice.wsocial.network
 # with the -- separator (also works — pnpm forwards it, the CLI strips it)
 pnpm --filter wclient cli -- list-repos
 pnpm --filter wclient cli -- describe-repo alice.wsocial.network
+pnpm --filter wclient cli -- get-profile did:plc:example
 
 # me.haters via public API using explicit DID (no auth required)
 pnpm --filter wclient cli -- view me.haters --did did:plc:example

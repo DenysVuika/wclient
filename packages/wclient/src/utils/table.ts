@@ -1,3 +1,5 @@
+import stringWidth from 'string-width';
+
 export type TableAlignment = 'left' | 'right';
 
 export type RenderAsciiTableOptions = {
@@ -19,7 +21,11 @@ export function formatReportDate(date: Date): string {
 }
 
 function padCell(value: string, width: number, alignment: TableAlignment): string {
-  return alignment === 'right' ? value.padStart(width, ' ') : value.padEnd(width, ' ');
+  const valueWidth = stringWidth(value);
+  const padWidth = Math.max(width - valueWidth, 0);
+  const pad = ' '.repeat(padWidth);
+
+  return alignment === 'right' ? `${pad}${value}` : `${value}${pad}`;
 }
 
 function divider(widths: number[]): string {
@@ -36,7 +42,7 @@ export function renderAsciiTable(options: RenderAsciiTableOptions): string {
 
   const columnCount = headers.length;
   const widths = headers.map((header, index) =>
-    Math.max(header.length, ...rows.map((entry) => (entry[index] ?? '').length))
+    Math.max(stringWidth(header), ...rows.map((entry) => stringWidth(entry[index] ?? '')))
   );
   const line = divider(widths);
 

@@ -54,6 +54,17 @@ if (session) {
 - `POST /xrpc/com.atproto.server.createSession`
 - `POST /xrpc/com.atproto.server.refreshSession`
 
+### app.bsky.actor
+
+- `GET /xrpc/app.bsky.actor.getProfile`
+  - Helper: `client.actor.getProfile(actor)`
+  - Example:
+
+```ts
+const profile = await client.actor.getProfile('did:plc:example');
+console.log(profile.displayName, profile.handle);
+```
+
 ### com.atproto.repo
 
 - `GET /xrpc/com.atproto.repo.describeRepo`
@@ -133,6 +144,18 @@ Options:
 
 `*` `--repo` can be omitted when using `--auth`; in that case, the CLI uses the authenticated session DID.
 
+#### `get-profile <actor>`
+
+Get detailed profile view for a handle or DID.
+
+```bash
+npx wclient get-profile did:plc:example
+npx wclient get-profile alice.wsocial.network
+
+# optionally authenticated for extra viewer metadata
+npx wclient --env-file .env --auth get-profile did:plc:example
+```
+
 #### `list-repos`
 
 List all repositories on the PDS.
@@ -149,6 +172,7 @@ Currently available reports:
 
 - `pds.users`: shows active users, inactive users, and total users across all pages from `com.atproto.sync.listRepos`
 - `me.haters`: shows users (DIDs) that have blocked a subject DID using `blue.microcosm.links.getBacklinks`
+  and resolves each blocker profile via `app.bsky.actor.getProfile`
 
 ```bash
 npx wclient view pds.users
@@ -197,7 +221,18 @@ JSON output example:
 {
   "subjectDid": "did:plc:example",
   "total": 9,
-  "blockers": ["did:plc:fakeblocker0000000000001", "did:plc:fakeblocker0000000000002"],
+  "blockers": [
+    {
+      "did": "did:plc:fakeblocker0000000000001",
+      "handle": "blocker-one.test",
+      "displayName": "Blocker One"
+    },
+    {
+      "did": "did:plc:fakeblocker0000000000002",
+      "handle": "blocker-two.test",
+      "displayName": "Blocker Two"
+    }
+  ],
   "pagesFetched": 1
 }
 ```

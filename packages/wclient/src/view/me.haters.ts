@@ -20,8 +20,14 @@ type BacklinksResponse = {
 export type MeHatersReport = {
   subjectDid: string;
   total: number;
-  blockers: string[];
+  blockers: MeHaterRecord[];
   pagesFetched: number;
+};
+
+export type MeHaterRecord = {
+  did: string;
+  handle: string;
+  displayName?: string;
 };
 
 export type MeHatersReportProgress = {
@@ -55,7 +61,7 @@ export async function getMeHatersReport(client: WClient, options?: GetMeHatersRe
 
   assertLimit(options?.limit);
 
-  const blockersSet = new Set<string>();
+  const blockerDidSet = new Set<string>();
   let cursor: string | undefined;
   let total = 0;
   let pagesFetched = 0;
@@ -92,7 +98,7 @@ export async function getMeHatersReport(client: WClient, options?: GetMeHatersRe
     }
 
     for (const record of data.records) {
-      blockersSet.add(record.did);
+      blockerDidSet.add(record.did);
     }
 
     recordsSoFar += data.records.length;
@@ -100,32 +106,61 @@ export async function getMeHatersReport(client: WClient, options?: GetMeHatersRe
     options?.onProgress?.({
       pagesFetched,
       recordsSoFar,
-      blockersSoFar: blockersSet.size,
+      blockersSoFar: blockerDidSet.size,
     });
 
     cursor = data.cursor ?? undefined;
   } while (cursor !== undefined);
 
+  const blockerDids = [...blockerDidSet];
+  const blockers = await Promise.all(
+    blockerDids.map(async (did) => {
+      try {
+        const profile = await client.actor.getProfile(did);
+        return {
+          did,
+          handle: profile.handle,
+          ...(profile.displayName !== undefined ? { displayName: profile.displayName } : {}),
+        } satisfies MeHaterRecord;
+      } catch {
+        return {
+          did,
+          handle: did,
+        } satisfies MeHaterRecord;
+      }
+    })
+  );
+
   return {
     subjectDid,
     total,
-    blockers: [...blockersSet],
+    blockers,
     pagesFetched,
   };
 }
 
+function formatHandleCell(blocker: MeHaterRecord): string {
+  if (blocker.displayName && blocker.displayName.length > 0) {
+    return `${blocker.displayName} (${blocker.handle})`;
+  }
+
+  return blocker.handle;
+}
+
 export function renderMeHatersReportTable(report: MeHatersReport, date: Date = new Date()): string {
   const rows: string[][] =
-    report.blockers.length > 0 ? report.blockers.map((did, index) => [String(index + 1), did]) : [['-', 'None']];
+    report.blockers.length > 0
+      ? report.blockers.map((blocker, index) => [String(index + 1), blocker.did, formatHandleCell(blocker)])
+      : [['-', 'None', 'None']];
 
   const output = [
     `Me Haters: ${formatReportDate(date)}`,
     `Subject DID: ${report.subjectDid}`,
     `Total blockers: ${formatNumber(report.blockers.length)} (records: ${formatNumber(report.total)})`,
     renderAsciiTable({
-      headers: ['#', 'DID'],
+      headers: ['#', 'DID', 'Handle'],
       rows,
-      alignments: ['right', 'left'],
+      alignments: ['right', 'left', 'left'],
     }),
   ];
 

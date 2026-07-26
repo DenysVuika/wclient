@@ -138,6 +138,7 @@ Usage: wclient <command> [options]
 
 Commands:
   describe-repo <repo>          Get information about an account and repository
+  get-profile <actor>           Get detailed profile view for a handle or DID
   list-records                  List records in a repository collection
   list-repos                    List repositories on the PDS
   view <report>                 Render a custom report
@@ -151,6 +152,7 @@ Global Options:
 
 Examples:
   wclient describe-repo alice.wsocial.network
+  wclient get-profile did:plc:alice
   wclient list-records --repo alice.wsocial.network --collection app.bsky.feed.post --limit 10
   wclient list-repos
   wclient view pds.users
@@ -231,6 +233,27 @@ async function main(): Promise<void> {
       break;
     }
 
+    case 'get-profile': {
+      if (flags['auth'] !== true) {
+        const authResult = await authenticateFromEnvOrExit(false);
+        if (authResult.session) {
+          client = authResult.client;
+          session = authResult.session;
+        }
+      }
+
+      const actor = positional[0] ?? (typeof flags['actor'] === 'string' ? flags['actor'] : undefined) ?? session?.did;
+      if (!actor) {
+        console.error('Error: <actor> argument is required (or use --auth to use the authenticated DID).');
+        console.error('Usage: wclient get-profile <actor> [--auth]');
+        process.exit(1);
+      }
+
+      const result = await client.actor.getProfile(actor);
+      console.log(JSON.stringify(result, null, 2));
+      break;
+    }
+
     case 'list-records': {
       const repo = (typeof flags['repo'] === 'string' ? flags['repo'] : undefined) ?? session?.did;
       const collection = typeof flags['collection'] === 'string' ? flags['collection'] : undefined;
@@ -304,14 +327,15 @@ async function main(): Promise<void> {
         }
 
         case 'me.haters': {
-          let did = (typeof flags['did'] === 'string' ? flags['did'] : undefined) ?? positional[1] ?? session?.did;
-
-          if (!did) {
+          if (flags['auth'] !== true) {
             const authResult = await authenticateFromEnvOrExit(false);
-            client = authResult.client;
-            session = authResult.session;
-            did = session?.did;
+            if (authResult.session) {
+              client = authResult.client;
+              session = authResult.session;
+            }
           }
+
+          let did = (typeof flags['did'] === 'string' ? flags['did'] : undefined) ?? positional[1] ?? session?.did;
 
           if (!did) {
             console.error(
