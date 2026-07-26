@@ -1,6 +1,10 @@
 import type { WClient } from '../wclient.js';
 import { getProfile } from '../api/actor.js';
 import { formatNumber, formatReportDate, renderAsciiTable } from '../utils/table.js';
+import {
+  getProfileFromCache,
+  saveProfileToCache,
+} from './profile-cache.js';
 
 export type PdsUsersReport = {
   users: number;
@@ -46,7 +50,15 @@ export async function getPdsUsersReport(client: WClient, options?: GetPdsUsersRe
     if (options?.withProfiles) {
       for (const repo of repos) {
         try {
-          const profile = await getProfile(client.apiClient, repo.did);
+          // Try to get from cache first
+          let profile = getProfileFromCache(repo.did);
+          
+          // If not in cache, fetch from API and cache it
+          if (!profile) {
+            profile = await getProfile(client.apiClient, repo.did);
+            saveProfileToCache(repo.did, profile);
+          }
+          
           hasProfileData = true;
           profilesFetched++;
 

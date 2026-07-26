@@ -4,6 +4,7 @@ node_modules/
 dist/
 .playground/
 .wclient-auth-session.json
+.wclient-profile-cache.json
 
 # Generated declaration artifacts next to source files
 **/*.d.ts

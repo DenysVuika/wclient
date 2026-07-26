@@ -10,6 +10,10 @@ import {
   getPdsUsersReport,
   renderPdsUsersReportTable,
 } from './view/pds.users.js';
+import {
+  clearProfileCache,
+  getCacheSize,
+} from './view/profile-cache.js';
 import { DEFAULT_PDS_URL, WClient } from './wclient.js';
 
 function extractEnvFileArg(args: string[]): string | null | undefined {
@@ -117,6 +121,19 @@ loadEnv(explicitEnvFile);
 const rawArgs = stripEnvFileArg(process.argv.slice(2)).filter(
   (arg) => arg !== '--',
 );
+
+// Handle cache clearing early before parsing command
+if (rawArgs.includes('--clear-profile-cache')) {
+  const cacheSize = getCacheSize();
+  clearProfileCache();
+  const cacheStatus =
+    cacheSize > 0
+      ? `Cleared profile cache (${cacheSize} entries).`
+      : 'Profile cache is already empty.';
+  console.log(cacheStatus);
+  process.exit(0);
+}
+
 const commandIndex = rawArgs.findIndex((arg) => !arg.startsWith('--'));
 const command = commandIndex === -1 ? undefined : rawArgs[commandIndex];
 const rest =
@@ -172,6 +189,7 @@ Global Options:
 View Options:
   --json                        Output as JSON instead of formatted table
   --with-profiles               Fetch and analyze profile data (for pds.users report)
+  --clear-profile-cache         Clear the profile cache file and exit
 
 Examples:
   wclient describe-repo alice.wsocial.network

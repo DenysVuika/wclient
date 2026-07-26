@@ -184,6 +184,9 @@ npx wclient view pds.users --json
 npx wclient view pds.users --with-profiles
 npx wclient view pds.users --with-profiles --json
 
+# clear the profile cache
+npx wclient --clear-profile-cache
+
 # public API usage with an explicit DID (no auth required)
 npx wclient view me.haters --did did:plc:example
 npx wclient view me.haters did:plc:example
@@ -283,6 +286,8 @@ JSON output example with `--with-profiles`:
   - `verifiedByAdmin`: accounts with `wsocialVerified: 'admin'`
 - Profile-based metrics are only included in output if profile data was successfully fetched.
 - If a PDS doesn't support W social attributes, those metrics will be omitted without errors.
+- Profile data is cached locally in `.wclient-profile-cache.json` to speed up subsequent runs.
+  Use `--clear-profile-cache` to clear the cache and fetch fresh data on the next run.
 
 `me.haters` notes:
 
@@ -293,15 +298,16 @@ JSON output example with `--with-profiles`:
 
 ### Global options
 
-| Flag                | Description                                                                     |
-| ------------------- | ------------------------------------------------------------------------------- |
-| `--env-file <path>` | Load environment variables from a specific file                                 |
-| `--base-url <url>`  | Override the default PDS URL                                                    |
-| `--auth`            | Authenticate using `W_USERNAME` and `W_PASSWORD` and reuse cached session DID   |
-| `--quiet`           | Suppress non-essential CLI output (for example loading progress in `view` mode) |
-| `--json`            | Output as JSON instead of formatted table (for `view` reports)                  |
-| `--with-profiles`   | Fetch profile data for additional metrics (for `view pds.users` report)         |
-| `--help`            | Show help                                                                       |
+| Flag                    | Description                                                                     |
+| ----------------------- | ------------------------------------------------------------------------------- |
+| `--env-file <path>`     | Load environment variables from a specific file                                 |
+| `--base-url <url>`      | Override the default PDS URL                                                    |
+| `--auth`                | Authenticate using `W_USERNAME` and `W_PASSWORD` and reuse cached session DID   |
+| `--quiet`               | Suppress non-essential CLI output (for example loading progress in `view` mode) |
+| `--json`                | Output as JSON instead of formatted table (for `view` reports)                  |
+| `--with-profiles`       | Fetch profile data for additional metrics (for `view pds.users` report)         |
+| `--clear-profile-cache` | Clear the cached profile data and exit                                          |
+| `--help`                | Show help                                                                       |
 
 ```bash
 npx wclient --env-file .env.local --auth describe-repo
