@@ -197,10 +197,7 @@ JSON output example:
 {
   "subjectDid": "did:plc:example",
   "total": 9,
-  "blockers": [
-    "did:plc:fakeblocker0000000000001",
-    "did:plc:fakeblocker0000000000002"
-  ],
+  "blockers": ["did:plc:fakeblocker0000000000001", "did:plc:fakeblocker0000000000002"],
   "pagesFetched": 1
 }
 ```
@@ -218,7 +215,7 @@ JSON output example:
 | ------------------- | ------------------------------------------------------------------------------- |
 | `--env-file <path>` | Load environment variables from a specific file                                 |
 | `--base-url <url>`  | Override the default PDS URL                                                    |
-| `--auth`            | Authenticate using `W_USERNAME` and `W_PASSWORD` and reuse cached session DID  |
+| `--auth`            | Authenticate using `W_USERNAME` and `W_PASSWORD` and reuse cached session DID   |
 | `--quiet`           | Suppress non-essential CLI output (for example loading progress in `view` mode) |
 | `--help`            | Show help                                                                       |
 

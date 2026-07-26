@@ -42,9 +42,7 @@ function assertLimit(limit: number | undefined): void {
   }
 
   if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
-    throw new Error(
-      'Invalid limit value: expected an integer in range 1..100.',
-    );
+    throw new Error('Invalid limit value: expected an integer in range 1..100.');
   }
 }
 
@@ -64,12 +62,7 @@ function divider(indexWidth: number, didWidth: number): string {
   return `+${'-'.repeat(indexWidth + 2)}+${'-'.repeat(didWidth + 2)}+`;
 }
 
-function tableRow(
-  index: string,
-  did: string,
-  indexWidth: number,
-  didWidth: number,
-): string {
+function tableRow(index: string, did: string, indexWidth: number, didWidth: number): string {
   return `| ${padLeft(index, indexWidth)} | ${padRight(did, didWidth)} |`;
 }
 
@@ -81,15 +74,10 @@ function formatReportDate(date: Date): string {
   }).format(date);
 }
 
-export async function getMeHatersReport(
-  client: WClient,
-  options?: GetMeHatersReportOptions,
-): Promise<MeHatersReport> {
+export async function getMeHatersReport(client: WClient, options?: GetMeHatersReportOptions): Promise<MeHatersReport> {
   const subjectDid = options?.did ?? client.getSession()?.did;
   if (!subjectDid) {
-    throw new Error(
-      'Unable to resolve DID. Authenticate first or pass options.did.',
-    );
+    throw new Error('Unable to resolve DID. Authenticate first or pass options.did.');
   }
 
   assertLimit(options?.limit);
@@ -122,9 +110,7 @@ export async function getMeHatersReport(
     });
 
     if (!response.ok) {
-      throw new Error(
-        `Failed to load haters report (${response.status} ${response.statusText}).`,
-      );
+      throw new Error(`Failed to load haters report (${response.status} ${response.statusText}).`);
     }
 
     const data = (await response.json()) as BacklinksResponse;
@@ -155,19 +141,11 @@ export async function getMeHatersReport(
   };
 }
 
-export function renderMeHatersReportTable(
-  report: MeHatersReport,
-  date: Date = new Date(),
-): string {
+export function renderMeHatersReportTable(report: MeHatersReport, date: Date = new Date()): string {
   const rows: Array<[string, string]> =
-    report.blockers.length > 0
-      ? report.blockers.map((did, index) => [String(index + 1), did])
-      : [['-', 'None']];
+    report.blockers.length > 0 ? report.blockers.map((did, index) => [String(index + 1), did]) : [['-', 'None']];
 
-  const indexWidth = Math.max(
-    '#'.length,
-    ...rows.map(([index]) => index.length),
-  );
+  const indexWidth = Math.max('#'.length, ...rows.map(([index]) => index.length));
   const didWidth = Math.max('DID'.length, ...rows.map(([, did]) => did.length));
   const line = divider(indexWidth, didWidth);
 
@@ -185,10 +163,7 @@ export function renderMeHatersReportTable(
   return output.join('\n');
 }
 
-export async function buildMeHatersReportTable(
-  client: WClient,
-  options?: GetMeHatersReportOptions,
-): Promise<string> {
+export async function buildMeHatersReportTable(client: WClient, options?: GetMeHatersReportOptions): Promise<string> {
   const report = await getMeHatersReport(client, options);
   return renderMeHatersReportTable(report);
 }

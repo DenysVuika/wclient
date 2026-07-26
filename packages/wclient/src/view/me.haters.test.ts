@@ -44,8 +44,8 @@ describe('me.haters report', () => {
           {
             status: 200,
             headers: { 'Content-Type': 'application/json' },
-          },
-        ),
+          }
+        )
       )
       .mockResolvedValueOnce(
         new Response(
@@ -68,8 +68,8 @@ describe('me.haters report', () => {
           {
             status: 200,
             headers: { 'Content-Type': 'application/json' },
-          },
-        ),
+          }
+        )
       );
     vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
 
@@ -88,14 +88,8 @@ describe('me.haters report', () => {
     });
     expect(fetchMock).toHaveBeenCalledTimes(2);
 
-    const [url1Input] = fetchMock.mock.calls[0] as [
-      RequestInfo | URL,
-      RequestInit,
-    ];
-    const [url2Input] = fetchMock.mock.calls[1] as [
-      RequestInfo | URL,
-      RequestInit,
-    ];
+    const [url1Input] = fetchMock.mock.calls[0] as [RequestInfo | URL, RequestInit];
+    const [url2Input] = fetchMock.mock.calls[1] as [RequestInfo | URL, RequestInit];
     const url1 = toRequestUrl(url1Input);
     const url2 = toRequestUrl(url2Input);
 
@@ -134,8 +128,8 @@ describe('me.haters report', () => {
         {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
-        },
-      ),
+        }
+      )
     );
     vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
 
@@ -171,8 +165,8 @@ describe('me.haters report', () => {
           {
             status: 200,
             headers: { 'Content-Type': 'application/json' },
-          },
-        ),
+          }
+        )
       )
       .mockResolvedValueOnce(
         new Response(
@@ -190,8 +184,8 @@ describe('me.haters report', () => {
           {
             status: 200,
             headers: { 'Content-Type': 'application/json' },
-          },
-        ),
+          }
+        )
       );
     vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch);
 
@@ -223,7 +217,7 @@ describe('me.haters report', () => {
         blockers: ['did:plc:first', 'did:plc:second'],
         pagesFetched: 1,
       },
-      new Date('2026-07-25T00:00:00Z'),
+      new Date('2026-07-25T00:00:00Z')
     );
 
     expect(output).toContain('Me Haters: 25 July 2026');
