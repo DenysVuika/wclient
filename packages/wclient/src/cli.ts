@@ -2,8 +2,10 @@ import * as dotenv from 'dotenv';
 import { existsSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { createFileAuthSessionStore, type Session } from './auth/index.js';
+import { formatNumber, renderAsciiTable } from './utils/table.js';
 import { getMeHatersReport, renderMeHatersReportTable } from './view/me.haters.js';
-import { getPdsUsersReport, renderPdsUsersReportTable } from './view/pds.users.js';
+import { getPdsUsersReport, renderPdsUsersReportTable, syncPdsProfileCache } from './view/pds.users.js';
+import { clearProfileCache, getCacheSize } from './view/profile-cache.js';
 import { DEFAULT_PDS_URL, WClient } from './wclient.js';
 
 function extractEnvFileArg(args: string[]): string | null | undefined {
@@ -101,6 +103,17 @@ if (explicitEnvFile === null) {
 loadEnv(explicitEnvFile);
 
 const rawArgs = stripEnvFileArg(process.argv.slice(2)).filter((arg) => arg !== '--');
+
+// Handle cache clearing early before parsing command
+if (rawArgs.includes('--clear-profile-cache')) {
+  const cacheSize = getCacheSize();
+  clearProfileCache();
+  const cacheStatus =
+    cacheSize > 0 ? `Cleared profile cache (${cacheSize} entries).` : 'Profile cache is already empty.';
+  console.log(cacheStatus);
+  process.exit(0);
+}
+
 const commandIndex = rawArgs.findIndex((arg) => !arg.startsWith('--'));
 const command = commandIndex === -1 ? undefined : rawArgs[commandIndex];
 const rest = commandIndex === -1 ? rawArgs : rawArgs.filter((_, index) => index !== commandIndex);
@@ -131,6 +144,123 @@ function parseArgs(args: string[]): { flags: Flags; positional: string[] } {
   return { flags, positional };
 }
 
+function parsePositiveIntegerFlag(flags: Flags, name: string): number | undefined {
+  const value = flags[name];
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value !== 'string') {
+    console.error(`Error: --${name} requires a positive integer value.`);
+    process.exit(1);
+  }
+
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    console.error(`Error: --${name} must be a positive integer.`);
+    process.exit(1);
+  }
+
+  return parsed;
+}
+
+function renderProgressBar(completed: number, total: number, width = 28): string {
+  if (total <= 0) {
+    return `[${'-'.repeat(width)}]`;
+  }
+
+  const filled = Math.min(width, Math.round((completed / total) * width));
+  return `[${'#'.repeat(filled)}${'-'.repeat(width - filled)}]`;
+}
+
+function renderPdsSyncProgress(progress: {
+  activeUsers: number;
+  inactiveUsers: number;
+  pagesFetched: number;
+  usersSeen: number;
+  profilesChecked: number;
+  cacheHits: number;
+  profilesFetched: number;
+  profilesFailed: number;
+}): string {
+  const bar = renderProgressBar(progress.profilesChecked, progress.usersSeen);
+  return `${bar} ${formatNumber(progress.profilesChecked)}/${formatNumber(progress.usersSeen)} profiles | pages ${formatNumber(progress.pagesFetched)} | fetched ${formatNumber(progress.profilesFetched)} | cached ${formatNumber(progress.cacheHits)} | failed ${formatNumber(progress.profilesFailed)}`;
+}
+
+function formatDuration(ms: number): string {
+  const totalSeconds = Math.max(0, Math.round(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  if (minutes === 0) {
+    return `${seconds}s`;
+  }
+
+  return `${minutes}m ${seconds}s`;
+}
+
+function renderPdsSyncSummary(result: {
+  activeUsers: number;
+  inactiveUsers: number;
+  pds: string;
+  usersSeen: number;
+  pagesFetched: number;
+  profilesFetched: number;
+  cacheHits: number;
+  profilesFailed: number;
+  failedProfiles?: Array<{ active?: boolean; did: string; error: string; status?: string }>;
+  cacheSize: number;
+  elapsedMs: number;
+}): string {
+  const lines = [
+    'PDS profile cache sync complete',
+    renderAsciiTable({
+      headers: ['Metric', 'Value'],
+      rows: [
+        ['PDS', result.pds],
+        ['Pages scanned', formatNumber(result.pagesFetched)],
+        ['Repos scanned', formatNumber(result.usersSeen)],
+        ['Active repos', formatNumber(result.activeUsers)],
+        ['Inactive repos', formatNumber(result.inactiveUsers)],
+        ['Profiles fetched', formatNumber(result.profilesFetched)],
+        ['Already cached', formatNumber(result.cacheHits)],
+        ['Failed profiles', formatNumber(result.profilesFailed)],
+        ['Cache entries for PDS', formatNumber(result.cacheSize)],
+        ['Elapsed time', formatDuration(result.elapsedMs)],
+      ],
+      alignments: ['left', 'right'],
+    }),
+  ];
+
+  if (result.failedProfiles !== undefined && result.failedProfiles.length > 0) {
+    lines.push(
+      'Failed profile fetches:',
+      renderAsciiTable({
+        headers: ['DID', 'State', 'Error'],
+        rows: result.failedProfiles.map((failure) => [failure.did, formatRepoState(failure), failure.error]),
+      })
+    );
+  }
+
+  return lines.join('\n');
+}
+
+function formatRepoState(repo: { active?: boolean; status?: string }): string {
+  if (repo.status !== undefined) {
+    return repo.status;
+  }
+
+  if (repo.active === true) {
+    return 'active';
+  }
+
+  if (repo.active === false) {
+    return 'inactive';
+  }
+
+  return 'unknown';
+}
+
 function printHelp(): void {
   console.log(`wclient - CLI for the W social media platform
 
@@ -141,6 +271,7 @@ Commands:
   get-profile <actor>           Get detailed profile view for a handle or DID
   list-records                  List records in a repository collection
   list-repos                    List repositories on the PDS
+  pds sync                      Fetch PDS profiles and fill the local profile cache
   view <report>                 Render a custom report
 
 Global Options:
@@ -150,12 +281,23 @@ Global Options:
   --quiet                       Suppress non-essential CLI output
   --help                        Show this help message
 
+Profile Options:
+  --json                        Output as JSON instead of formatted table
+  --with-profiles               Fetch and analyze profile data (for pds.users report)
+  --profile-concurrency <n>     Number of parallel profile requests (default: 8)
+  --refresh-profiles            Re-fetch profiles already present in the cache
+  --clear-profile-cache         Clear the profile cache database and exit
+
 Examples:
   wclient describe-repo alice.wsocial.network
   wclient get-profile did:plc:alice
   wclient list-records --repo alice.wsocial.network --collection app.bsky.feed.post --limit 10
   wclient list-repos
+  wclient pds sync
+  wclient pds sync --profile-concurrency 16
   wclient view pds.users
+  wclient view pds.users --with-profiles
+  wclient view pds.users --with-profiles --profile-concurrency 16
   wclient view me.haters --did did:plc:example
   wclient view pds.users --quiet
   wclient view pds.users --json
@@ -285,6 +427,38 @@ async function main(): Promise<void> {
       break;
     }
 
+    case 'pds': {
+      const subcommand = positional[0];
+      if (subcommand !== 'sync') {
+        console.error('Error: pds subcommand is required.');
+        console.error('Usage: wclient pds sync [--profile-concurrency N] [--refresh-profiles] [--quiet]');
+        process.exit(1);
+      }
+
+      const profileFetchConcurrency = parsePositiveIntegerFlag(flags, 'profile-concurrency');
+      const quiet = flags['quiet'] === true;
+
+      if (process.stderr.isTTY && !quiet) {
+        process.stderr.write(`Syncing profile cache for ${client.getBaseUrl()}...\r`);
+      }
+
+      const result = await syncPdsProfileCache(client, {
+        ...(profileFetchConcurrency !== undefined ? { profileFetchConcurrency } : {}),
+        refreshProfiles: flags['refresh-profiles'] === true,
+        onProgress: (progress) => {
+          if (!process.stderr.isTTY || quiet) return;
+          process.stderr.write(`\r${renderPdsSyncProgress(progress)}\x1b[K`);
+        },
+      });
+
+      if (process.stderr.isTTY && !quiet) {
+        process.stderr.write('\n');
+      }
+
+      console.log(renderPdsSyncSummary(result));
+      break;
+    }
+
     case 'view': {
       const report = positional[0] ?? (typeof flags['report'] === 'string' ? flags['report'] : undefined);
       const wantsJson = flags['json'] === true;
@@ -299,8 +473,13 @@ async function main(): Promise<void> {
 
       switch (report) {
         case 'pds.users': {
+          const profileFetchConcurrency = parsePositiveIntegerFlag(flags, 'profile-concurrency');
+
           if (wantsJson) {
-            const result = await getPdsUsersReport(client);
+            const result = await getPdsUsersReport(client, {
+              withProfiles: flags['with-profiles'] === true,
+              ...(profileFetchConcurrency !== undefined ? { profileFetchConcurrency } : {}),
+            });
             console.log(JSON.stringify(result, null, 2));
           } else {
             if (process.stderr.isTTY && !quiet) {
@@ -308,11 +487,19 @@ async function main(): Promise<void> {
             }
 
             const result = await getPdsUsersReport(client, {
-              onProgress: ({ pagesFetched, usersSoFar }) => {
+              withProfiles: flags['with-profiles'] === true,
+              ...(profileFetchConcurrency !== undefined ? { profileFetchConcurrency } : {}),
+              onProgress: ({ pagesFetched, usersSoFar, profilesFetched }) => {
                 if (!process.stderr.isTTY || quiet) return;
-                process.stderr.write(
-                  `Loading users... pages: ${pagesFetched}, users: ${usersSoFar.toLocaleString('en-US')}\r`
-                );
+                if (profilesFetched !== undefined) {
+                  process.stderr.write(
+                    `Loading users... pages: ${pagesFetched}, profiles: ${profilesFetched.toLocaleString('en-US')}\r`
+                  );
+                } else {
+                  process.stderr.write(
+                    `Loading users... pages: ${pagesFetched}, users: ${usersSoFar.toLocaleString('en-US')}\r`
+                  );
+                }
               },
             });
 

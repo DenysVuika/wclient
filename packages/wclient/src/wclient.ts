@@ -34,13 +34,14 @@ export class WClient {
   readonly actor: ActorService;
   readonly repo: RepoService;
   readonly sync: SyncService;
+  private readonly resolveBaseUrl: () => string;
 
   constructor({ baseUrl, authStore = createInMemoryAuthSessionStore() }: WClientOptions = {}) {
-    const resolveBaseUrl = typeof baseUrl === 'function' ? baseUrl : () => baseUrl ?? DEFAULT_PDS_URL;
-    const authApiClient = createApiClient(resolveBaseUrl);
+    this.resolveBaseUrl = typeof baseUrl === 'function' ? baseUrl : () => baseUrl ?? DEFAULT_PDS_URL;
+    const authApiClient = createApiClient(this.resolveBaseUrl);
 
     this.auth = createAuth(authApiClient, authStore);
-    this.apiClient = createApiClient(resolveBaseUrl, this.auth);
+    this.apiClient = createApiClient(this.resolveBaseUrl, this.auth);
     this.actor = {
       getProfile: (actor: string) => getProfile(this.apiClient, actor),
     };
@@ -59,6 +60,10 @@ export class WClient {
 
   getSession(): Session | null {
     return this.auth.getSession();
+  }
+
+  getBaseUrl(): string {
+    return this.resolveBaseUrl();
   }
 
   clearSession(): void {

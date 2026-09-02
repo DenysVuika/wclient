@@ -164,13 +164,27 @@ List all repositories on the PDS.
 npx wclient list-repos
 ```
 
+#### `pds sync`
+
+Fetch all profiles from the current PDS and fill the local SQLite profile cache. Existing cached profiles are skipped unless `--refresh-profiles` is used.
+
+```bash
+npx wclient pds sync
+npx wclient pds sync --profile-concurrency 16
+npx wclient pds sync --refresh-profiles
+```
+
+The command shows an updating progress bar in interactive terminals and prints a final summary table with pages scanned, repositories scanned, active/inactive repositories, profiles fetched, cache hits, failures, cache size, and elapsed time for that PDS.
+If profile fetches fail, the summary includes a sample of failed DIDs with their repo state and error messages. Re-running the command later skips already cached profiles whose repo `head` and `rev` have not changed, and retries missing or changed profiles unless `--refresh-profiles` is passed.
+
 #### `view <report>`
 
 Render a custom report.
 
 Currently available reports:
 
-- `pds.users`: shows active users, inactive users, and total users across all pages from `com.atproto.sync.listRepos`
+- `pds.users`: shows active users, inactive users, and total users across all pages from `com.atproto.sync.listRepos`.
+  Use `--with-profiles` to fetch profile metadata and include additional metrics (human/bot users, verification status).
 - `me.haters`: shows users (DIDs) that have blocked a subject DID using `blue.microcosm.links.getBacklinks`
   and resolves each blocker profile via `app.bsky.actor.getProfile`
 
@@ -178,6 +192,13 @@ Currently available reports:
 npx wclient view pds.users
 npx wclient view pds.users --quiet
 npx wclient view pds.users --json
+
+# fetch profile data to include user type and verification metrics
+npx wclient view pds.users --with-profiles
+npx wclient view pds.users --with-profiles --json
+
+# clear the profile cache
+npx wclient --clear-profile-cache
 
 # public API usage with an explicit DID (no auth required)
 npx wclient view me.haters --did did:plc:example
@@ -205,6 +226,23 @@ PDS Users: 25 July 2026
 +----------------+-------+
 ```
 
+Table output example with `--with-profiles`:
+
+```text
+PDS Users: 26 July 2026
++-------------------+-------+
+| Metric            | Value |
++-------------------+-------+
+| Active users      |   987 |
+| Inactive users    |   247 |
+| Total users       | 1,234 |
+| Human users       |   956 |
+| Bot users         |    31 |
+| Verified by WID   |   145 |
+| Verified by Admin |     8 |
++-------------------+-------+
+```
+
 JSON output example:
 
 ```json
@@ -212,6 +250,20 @@ JSON output example:
   "users": 1234,
   "activeUsers": 987,
   "inactiveUsers": 247
+}
+```
+
+JSON output example with `--with-profiles`:
+
+```json
+{
+  "users": 1234,
+  "activeUsers": 987,
+  "inactiveUsers": 247,
+  "humanUsers": 956,
+  "botUsers": 31,
+  "verifiedByWid": 145,
+  "verifiedByAdmin": 8
 }
 ```
 
@@ -237,6 +289,19 @@ JSON output example:
 }
 ```
 
+`pds.users` notes:
+
+- By default, only basic metrics are shown (active, inactive, total).
+- Use `--with-profiles` to fetch profile metadata and include additional metrics:
+  - `humanUsers`: accounts with `wsocialAccountType: 'human'`
+  - `botUsers`: accounts with `wsocialAccountType: 'bot'`
+  - `verifiedByWid`: accounts with `wsocialVerified: 'wid'`
+  - `verifiedByAdmin`: accounts with `wsocialVerified: 'admin'`
+- Profile-based metrics are only included in output if profile data was successfully fetched.
+- If a PDS doesn't support W social attributes, those metrics will be omitted without errors.
+- Profile data is cached locally in `.wclient-profile-cache.sqlite` to speed up subsequent runs.
+  Profiles are stored in a `profiles` table keyed by PDS and DID, with profile data in a JSON column that can be queried with SQLite JSON functions. Repository metadata from `listRepos` is cached in a `repo_states` table keyed by PDS and DID, including `active`, `status`, `head`, and `rev`. Cached profiles are reused only while the cached repo `head` and `rev` match the latest `listRepos` row. Use `--clear-profile-cache` to clear the cache and fetch fresh data on the next run.
+
 `me.haters` notes:
 
 - The subject DID is resolved in this order: `--did`, positional DID (`view me.haters <did>`), authenticated session DID.
@@ -246,13 +311,18 @@ JSON output example:
 
 ### Global options
 
-| Flag                | Description                                                                     |
-| ------------------- | ------------------------------------------------------------------------------- |
-| `--env-file <path>` | Load environment variables from a specific file                                 |
-| `--base-url <url>`  | Override the default PDS URL                                                    |
-| `--auth`            | Authenticate using `W_USERNAME` and `W_PASSWORD` and reuse cached session DID   |
-| `--quiet`           | Suppress non-essential CLI output (for example loading progress in `view` mode) |
-| `--help`            | Show help                                                                       |
+| Flag                    | Description                                                                     |
+| ----------------------- | ------------------------------------------------------------------------------- |
+| `--env-file <path>`     | Load environment variables from a specific file                                 |
+| `--base-url <url>`      | Override the default PDS URL                                                    |
+| `--auth`                | Authenticate using `W_USERNAME` and `W_PASSWORD` and reuse cached session DID   |
+| `--quiet`               | Suppress non-essential CLI output (for example loading progress in `view` mode) |
+| `--json`                | Output as JSON instead of formatted table (for `view` reports)                  |
+| `--with-profiles`       | Fetch profile data for additional metrics (for `view pds.users` report)         |
+| `--profile-concurrency` | Number of parallel profile requests for profile cache/report operations         |
+| `--refresh-profiles`    | Re-fetch profiles already present in the cache during `pds sync`                |
+| `--clear-profile-cache` | Clear the cached profile data and exit                                          |
+| `--help`                | Show help                                                                       |
 
 ```bash
 npx wclient --env-file .env.local --auth describe-repo
