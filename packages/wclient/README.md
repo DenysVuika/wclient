@@ -164,6 +164,19 @@ List all repositories on the PDS.
 npx wclient list-repos
 ```
 
+#### `pds sync`
+
+Fetch all profiles from the current PDS and fill the local SQLite profile cache. Existing cached profiles are skipped unless `--refresh-profiles` is used.
+
+```bash
+npx wclient pds sync
+npx wclient pds sync --profile-concurrency 16
+npx wclient pds sync --refresh-profiles
+```
+
+The command shows an updating progress bar in interactive terminals and prints a final summary table with pages scanned, repositories scanned, active/inactive repositories, profiles fetched, cache hits, failures, cache size, and elapsed time for that PDS.
+If profile fetches fail, the summary includes a sample of failed DIDs with their repo state and error messages. Re-running the command later skips already cached profiles whose repo `head` and `rev` have not changed, and retries missing or changed profiles unless `--refresh-profiles` is passed.
+
 #### `view <report>`
 
 Render a custom report.
@@ -286,8 +299,8 @@ JSON output example with `--with-profiles`:
   - `verifiedByAdmin`: accounts with `wsocialVerified: 'admin'`
 - Profile-based metrics are only included in output if profile data was successfully fetched.
 - If a PDS doesn't support W social attributes, those metrics will be omitted without errors.
-- Profile data is cached locally in `.wclient-profile-cache.json` to speed up subsequent runs.
-  Use `--clear-profile-cache` to clear the cache and fetch fresh data on the next run.
+- Profile data is cached locally in `.wclient-profile-cache.sqlite` to speed up subsequent runs.
+  Profiles are stored in a `profiles` table keyed by PDS and DID, with profile data in a JSON column that can be queried with SQLite JSON functions. Repository metadata from `listRepos` is cached in a `repo_states` table keyed by PDS and DID, including `active`, `status`, `head`, and `rev`. Cached profiles are reused only while the cached repo `head` and `rev` match the latest `listRepos` row. Use `--clear-profile-cache` to clear the cache and fetch fresh data on the next run.
 
 `me.haters` notes:
 
@@ -306,6 +319,8 @@ JSON output example with `--with-profiles`:
 | `--quiet`               | Suppress non-essential CLI output (for example loading progress in `view` mode) |
 | `--json`                | Output as JSON instead of formatted table (for `view` reports)                  |
 | `--with-profiles`       | Fetch profile data for additional metrics (for `view pds.users` report)         |
+| `--profile-concurrency` | Number of parallel profile requests for profile cache/report operations         |
+| `--refresh-profiles`    | Re-fetch profiles already present in the cache during `pds sync`                |
 | `--clear-profile-cache` | Clear the cached profile data and exit                                          |
 | `--help`                | Show help                                                                       |
 
